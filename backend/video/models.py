@@ -26,7 +26,7 @@ class Video(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_video")
     descrip = models.TextField(null=True, blank=True)
     video = models.FileField(upload_to="video", validators=[FileExtensionValidator(allowed_extensions=['mp4'])])
-    music = models.ForeignKey(Music, on_delete=models.CASCADE, related_name="video_music", null=True, blank=True)
+    music = models.ForeignKey(Music, on_delete=models.SET_NULL, related_name="video_music", null=True, blank=True)
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -65,6 +65,7 @@ class LikeVideo(models.Model):
 
 
 class CommentVideo(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_video_comment")
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="video_comment")
     context = models.TextField()

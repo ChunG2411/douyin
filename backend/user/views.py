@@ -1,4 +1,4 @@
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import permissions
 from rest_framework.views import APIView
@@ -13,9 +13,9 @@ from moviepy.editor import *
 import os
 
 from social_network.config import response_error, response_success
-from .models import User, UserStatus
+from .models import User, UserStatus, UserFollower, UserFollowed
 from .serializers import UserRegisterSerializers, UserDetailSerializer
-from video.serializers import LikeVideoSerializer, SaveSerializer, VideoSerializer
+from video.serializers import VideoSerializer
 from video.models import LikeVideo, Save, Video, Music
 from social_network.function import get_absolute_media_path
 
@@ -299,6 +299,8 @@ def delete_video(request, username, pk):
     try:
         video = Video.objects.get(id=pk)
         music = Music.objects.get(id=video.music.id)
+        os.remove(get_absolute_media_path(video.video.url[1:]))
+        os.remove(get_absolute_media_path(music.music.url[1:]))
         music.delete()
         video.delete()
 
@@ -307,7 +309,8 @@ def delete_video(request, username, pk):
     
     return Response(response_success("Delete video succesful."), status=204)
 
-    
+
+@permission_classes([permissions.IsAuthenticated])
 class UserLikeVideoView(APIView):
     def get_user(self, username):
         try:
@@ -319,6 +322,8 @@ class UserLikeVideoView(APIView):
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
+        if request.user != user:
+            return Response(response_error("Check user login."), status=400)
         
         likes = LikeVideo.objects.filter(user=user)
         serializers = VideoSerializer([i.video for i in likes], many=True)
@@ -326,6 +331,7 @@ class UserLikeVideoView(APIView):
         return Response(response_success(serializers.data), status=200)
     
 
+@permission_classes([permissions.IsAuthenticated])
 class UserSaveVideoView(APIView):
     def get_user(self, username):
         try:
@@ -337,9 +343,38 @@ class UserSaveVideoView(APIView):
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
+        if request.user != user:
+            return Response(response_error("Check user login."), status=400)
         
         saves = Save.objects.filter(user=user)
         serializers = VideoSerializer([i.video for i in saves], many=True)
 
         return Response(response_success(serializers.data), status=200)
+    
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def FollowView(request, username):
+    try:
+        user = User.objects.get(username=username)
+        if request.user != user:
+            try:
+                followed = UserFollowed.objects.get(user=request.user).followed
+                follower = UserFollower.objects.get(user=user).follower
+                if user in followed.all():
+                    followed.remove(user)
+                    follower.remove(request.user)
+                    return Response(response_success("UnFollowed."), status=200)
+                else:
+                    followed.add(user)
+                    follower.add(request.user)
+                    return Response(response_success("Followed."), status=200)
+
+            except Exception as e:
+                return Response(response_error(str(e)), status=400)
+        else:
+            return Response(response_error("Check user follow."), status=400)
+
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
     
