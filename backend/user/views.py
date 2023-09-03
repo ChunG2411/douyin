@@ -73,6 +73,8 @@ def ModifyUser(request, pk):
         user = User.objects.get(id=pk)
     except:
         return Response(response_error("User don't exist."))
+    if request.user != user:
+            return Response(response_error("Check user login."), status=400)
     
     if username and username != "":
         try:
@@ -175,13 +177,14 @@ class LogoutView(APIView):
         return Response(response_success("Logout successful."), status=200)
 
     
-
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def user_online(request, username):
     user = None
     try:
         user = User.objects.get(username=username)
+        if request.user != user:
+            return Response(response_error("Check user login."), status=400)
     except:
         return Response(response_error("User don't exist."), status=400)
     
@@ -198,6 +201,8 @@ def user_offline(request, username):
     user = None
     try:
         user = User.objects.get(username=username)
+        if request.user != user:
+            return Response(response_error("Check user login"), status=400)
     except:
         return Response(response_error("User don't exist."), status=400)
     
@@ -229,36 +234,78 @@ class UserVideoView(APIView):
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
+        if request.user != user:
+            return Response(response_error("Check user login."), status=400)
         
-        request.data['user'] = user.id
-        serializer = VideoSerializer(data=request.data)
+        request_copy = request.data.copy()
+        request_copy['user'] = user.id
+        serializer = VideoSerializer(data=request_copy)
         if serializer.is_valid():
             serializer.save()
 
-            if request.data['use_video_music'] == "1":
+            if request_copy['use_video_music'] == "1":
                 # convert mp4 to mp3
                 path_video = serializer.data['video'][1:]
                 path_music = path_video.replace('video/', 'music/').replace('.mp4', '.mp3')
-                video = VideoFileClip(path_video)
-                video.audio.write_audiofile(path_music)
-                video.close()
+                video_upload = VideoFileClip(path_video)
+                video_upload.audio.write_audiofile(path_music)
+                video_upload.close()
 
                 try:
-                    music = Music.objects.create(user=user, music=path_music)
-                    video = Video.objects.get(id=serializer.data['id']).music = music
+                    music = Music.objects.create(user=user, music=path_music.replace('media/', ''))
+                    video = Video.objects.get(id=serializer.data['id'])
+                    video.music = music
                     video.save()
-                except:
+                except Exception as e:
                     Video.objects.get(id=serializer.data['id']).delete()
                     try:
                         os.remove(get_absolute_media_path(path_video))
                         os.remove(get_absolute_media_path(path_music))
-                    except Exception as e:
+                    except Exception:
                         pass
                     return Response(response_error("Error convert to mp3."), status=400)
-
-            return Response(response_success(serializer.data), status=201)
+            else:
+                music_id = request_copy['music']
+                if music_id == "":
+                    return Response(response_error("Music is required."), status=400)
+                
+                try:
+                    music = Music.objects.get(id=music_id)
+                    video = Video.objects.get(id=serializer.data['id'])
+                    video.music = music
+                    video.save()
+                except Exception as e:
+                    Video.objects.get(id=serializer.data['id']).delete()
+                    try:
+                        os.remove(get_absolute_media_path(path_video))
+                        os.remove(get_absolute_media_path(path_music))
+                    except Exception:
+                        pass
+                    return Response(response_error(str(e)), status=400)
+            video_serializer = VideoSerializer(video)
+            return Response(response_success(video_serializer.data), status=201)
         else:
             return Response(response_error(serializer.errors), status=400)
+
+
+@api_view(["DELETE"])
+@permission_classes([permissions.IsAuthenticated])
+def delete_video(request, username, pk):
+    user = User.objects.get(username=username)
+    if not user:
+        return Response(response_error("User don't exist."), status=400)
+    if request.user != user:
+        return Response(response_error("Check user login."), status=400)
+    try:
+        video = Video.objects.get(id=pk)
+        music = Music.objects.get(id=video.music.id)
+        music.delete()
+        video.delete()
+
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+    
+    return Response(response_success("Delete video succesful."), status=204)
 
     
 class UserLikeVideoView(APIView):
@@ -274,12 +321,12 @@ class UserLikeVideoView(APIView):
             return Response(response_error("User don't exist."), status=400)
         
         likes = LikeVideo.objects.filter(user=user)
-        serializers = LikeVideoSerializer([i.video for i in likes], many=True)
+        serializers = VideoSerializer([i.video for i in likes], many=True)
 
         return Response(response_success(serializers.data), status=200)
     
 
-class UserSaveView(APIView):
+class UserSaveVideoView(APIView):
     def get_user(self, username):
         try:
             return User.objects.get(username=username)
@@ -292,7 +339,7 @@ class UserSaveView(APIView):
             return Response(response_error("User don't exist."), status=400)
         
         saves = Save.objects.filter(user=user)
-        serializers = SaveSerializer([i.video for i in saves], many=True)
+        serializers = VideoSerializer([i.video for i in saves], many=True)
 
         return Response(response_success(serializers.data), status=200)
     

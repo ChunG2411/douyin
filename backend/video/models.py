@@ -36,23 +36,18 @@ class Video(models.Model):
     
     @property
     def like_count(self):
-        try:
-            like = LikeVideo.objects.get(user=self.user, video=self)
-            return like.count()
-        except:
-            return "0"
+        like = LikeVideo.objects.filter(video=self)
+        return like.count()
     
     @property
     def comment_count(self):
-        try:
-            comment = CommentVideo.objects.get(user=self.user, video=self)
-            return comment.count()
-        except:
-            return "0"
+        comment = CommentVideo.objects.filter(video=self)
+        return comment.count()
     
     @property
-    def get_music(self):
-        pass
+    def save_count(self):
+        save = Save.objects.filter(video=self)
+        return save.count()
     
     def __str__(self):
         return self.user.username
