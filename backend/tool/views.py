@@ -11,7 +11,8 @@ from video.models import Video
 from video.serializers import VideoSerializer
 from user.models import User
 from user.serializers import UserDetailSerializer
-from .models import SearchRecent
+from .models import SearchRecent, Noti
+from .serializers import NotiSerializer
 
 # Create your views here.
 @api_view(['GET'])
@@ -44,4 +45,20 @@ def SearchUser(request):
     serializers = UserDetailSerializer(users, many=True)
 
     return Response(response_success(serializers.data), status=200)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def NotiView(request):
+    user = request.user
+    noti = Noti.objects.filter(user=user)
+    serializer = NotiSerializer(noti, many=True)
+    ser_copy = serializer.data
+    
+    noti_not_read = noti.filter(status=False)
+    for i in noti_not_read:
+        i.status = True
+        i.save()
+    
+    return Response(response_success(ser_copy), status=200)
 
