@@ -19,7 +19,7 @@ from video.views import (
 from tool.views import (
     SearchVideo,
     SearchUser,
-    NotiView
+    NotiView, testview
 )
 
 urlpatterns = [
@@ -52,5 +52,5 @@ urlpatterns = [
     path('search/video', SearchVideo, name="search-video"),
     path('search/user', SearchUser, name="search-user"),
     path('notification', NotiView, name="noti"),
-
+    path('test', testview)
 ]

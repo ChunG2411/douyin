@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from django.db.models import Q
+from django.shortcuts import  render
 
 from social_network.config import response_error, response_success
 
@@ -62,3 +63,6 @@ def NotiView(request):
     
     return Response(response_success(ser_copy), status=200)
 
+
+def testview(request):
+    return render(request, "index.html")
