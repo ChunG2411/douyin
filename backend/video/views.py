@@ -38,6 +38,16 @@ def get_videolist_of_music(request, pk):
 
 
 @api_view(['GET'])
+def get_video(request, pk):
+    try:
+        video = Video.objects.get(id=pk)
+        serializer = VideoSerializer(video)
+        return Response(response_success(serializer.data), status=200)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+
+
+@api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def SaveVideoView(request, pk):
     user = request.user

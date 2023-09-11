@@ -14,7 +14,8 @@
     </head>
     <body>
         <p>test</p>
-        <button class="start">start</button>
+        <button class="like">like</button>
+        <button class="comment">comment</button>
         
         <script src="https://code.jquery.com/jquery-3.5.1.js" 
                 integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" 
@@ -40,7 +41,24 @@
                 }
             }
             connect_noti();
-            
+
+            const like = document.querySelector('.like')
+            const comment = document.querySelector('.comment')
+
+            like.addEventListener('click', ()=>{
+                socket_noti.send(JSON.stringify({
+                    "user" : "admin",
+                    "video" : "c72acbf908904f179464893bed6e47e7",
+                    "type" : "1"
+                }));
+            })
+            comment.addEventListener('click', ()=>{
+                socket_noti.send(JSON.stringify({
+                    "user" : "admin",
+                    "video" : "c72acbf908904f179464893bed6e47e7",
+                    "type" : "2"
+                }));
+            })
             
         </script>
     </body>

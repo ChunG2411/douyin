@@ -64,5 +64,16 @@ def NotiView(request):
     return Response(response_success(ser_copy), status=200)
 
 
+@api_view(["DELETE"])
+@permission_classes([permissions.IsAuthenticated])
+def DeleteNotiView(request, pk):
+    try:
+        noti = Noti.objects.get(id=pk, user=request.user)
+        noti.delete()
+        return Response(response_success("Delete notification successful."), status=200)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+
+
 def testview(request):
     return render(request, "index.html")

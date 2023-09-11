@@ -9,6 +9,7 @@ from user.views import (
 from video.views import (
     MusicView,
     get_videolist_of_music,
+    get_video,
     LikeVideoView,
     CommentView,
     CommentVideoView,
@@ -19,7 +20,8 @@ from video.views import (
 from tool.views import (
     SearchVideo,
     SearchUser,
-    NotiView, testview
+    NotiView, DeleteNotiView,
+    testview
 )
 
 urlpatterns = [
@@ -41,6 +43,7 @@ urlpatterns = [
     path('music/<str:pk>', MusicView.as_view(), name="music"),
     path('music/<str:pk>/video', get_videolist_of_music, name="music-video-list"),
 
+    path('video/<str:pk>', get_video, name="video"),
     path('video/<str:pk>/save', SaveVideoView, name="video-save"),
     path('video/<str:pk>/like', LikeVideoView, name="video-like"),
     path('video/<str:pk>/comment', CommentVideoView, name="video-comment"),
@@ -52,5 +55,8 @@ urlpatterns = [
     path('search/video', SearchVideo, name="search-video"),
     path('search/user', SearchUser, name="search-user"),
     path('notification', NotiView, name="noti"),
+    path("notification/<str:pk>", DeleteNotiView, name="noti-delete"),
+
+
     path('test', testview)
 ]
