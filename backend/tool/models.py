@@ -1,3 +1,4 @@
+import os
 import uuid
 from django.db import models
 
@@ -38,43 +39,42 @@ class Noti(models.Model):
         verbose_name = 'Notification'
 
 
-class SingleChat(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="single_sender")
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="single_receiver")
-    context = models.TextField(null=True, blank=True)
-    image = models.FileField(null=True, blank=True, upload_to='single_chat/%(sender__username)s_%(receiver__username)s')
-    status = models.BooleanField(default=False)
-    create_time = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-create_time']
-        db_table = 'tb_single_chat'
-        verbose_name = 'Single Chat'
-
-
-class Group(models.Model):
+class Chat(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    name = models.TextField(max_length=255)
-    member = models.ManyToManyField(User, blank=True, related_name="group")
-    create_time = models.DateTimeField(auto_now_add=True)
+    name = models.TextField(max_length=255, blank=True, null=True)
+    member = models.ManyToManyField(User, blank=True, related_name="chat_member")
+    TYPE_CHOICES = (
+        ('1', 'single'),
+        ('2', 'group')
+    )
+    type = models.CharField(choices=TYPE_CHOICES, max_length=10)
+    avatar = models.ImageField(upload_to="chat/avatar", blank=True, null=True)
+    last_action = models.DateTimeField(blank=True, null=True)
+    last_message = models.TextField(blank=True, null=True)
 
     class Meta:
-        ordering = ['-create_time']
-        db_table = 'tb_group'
-        verbose_name = 'Group'
+        ordering = ['-last_action']
+        db_table = 'tb_chat'
+        verbose_name = 'Chat'
 
 
-class GroupChat(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="group_sender")
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="group_receiver")
+def message_file_upload_path(instance, filename):
+    group_id = instance.receiver.id
+    folder_path = f"chat/file/{group_id}"
+    return os.path.join(folder_path, filename)
+
+
+class Message(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sender")
+    receiver = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name="receiver")
     context = models.TextField(null=True, blank=True)
-    image = models.FileField(null=True, blank=True, upload_to="group_chat/%(group__id)s")
-    reader = models.ManyToManyField(User, blank=True, related_name="group_reader")
+    media = models.FileField(null=True, blank=True, upload_to=message_file_upload_path)
+    reader = models.ManyToManyField(User, blank=True, related_name="reader")
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-create_time']
-        db_table = 'tb_group_chat'
-        verbose_name = 'Group Chat'
+        db_table = 'tb_message'
+        verbose_name = 'Message'
 
     

@@ -2,6 +2,7 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework import mixins, generics
 
 from django.db.models import Q
 from django.shortcuts import  render
@@ -12,8 +13,8 @@ from video.models import Video
 from video.serializers import VideoSerializer
 from user.models import User
 from user.serializers import UserDetailSerializer
-from .models import SearchRecent, Noti
-from .serializers import NotiSerializer
+from .models import SearchRecent, Noti, Chat, Message
+from .serializers import NotiSerializer, ChatSerializer
 
 # Create your views here.
 @api_view(['GET'])
@@ -73,6 +74,26 @@ def DeleteNotiView(request, pk):
         return Response(response_success("Delete notification successful."), status=200)
     except Exception as e:
         return Response(response_error(str(e)), status=400)
+
+
+@permission_classes([permissions.IsAuthenticated])
+class ChatView(mixins.ListModelMixin,
+               mixins.UpdateModelMixin,
+               mixins.DestroyModelMixin,
+               mixins.RetrieveModelMixin,
+               generics.GenericAPIView):
+    
+    queryset = Chat.objects.all()
+    serializer_class = ChatSerializer
+    lookup_field = 'id'
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, id=None):
+        print(id)
+        if id:
+            return self.retrieve(request, id)
+        else:
+            return self.list(request)
 
 
 def testview(request):
