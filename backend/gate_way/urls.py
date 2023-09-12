@@ -22,6 +22,7 @@ from tool.views import (
     SearchUser,
     NotiView, DeleteNotiView,
     ChatView,
+    MessageView,
     testview
 )
 
@@ -59,6 +60,7 @@ urlpatterns = [
     path("notification/<str:pk>", DeleteNotiView, name="noti-delete"),
 
     path("chat/", ChatView.as_view(), name="chat"),
+    path("chat/<str:pk>/detail", MessageView.as_view(), name="message"),
 
     path('test', testview)
 ]
