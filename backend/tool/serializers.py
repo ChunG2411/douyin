@@ -85,3 +85,18 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = "__all__"
 
+    def create(self, validated_data):
+        sender = self.initial_data['sender']
+        receiver = self.initial_data['receiver']
+
+        member = Chat.objects.get(id=receiver).member.all()
+        sender_user = User.objects.get(id=sender)
+        if sender_user not in member:
+            raise serializers.ValidationError(response_error("You aren't a member of this group."))
+        
+        validated_data.pop('reader')
+        message = Message(**validated_data)
+        message.save()
+        message.reader.add(sender_user)
+        return message
+    

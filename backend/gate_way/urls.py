@@ -18,11 +18,11 @@ from video.views import (
     SaveVideoView
 )
 from tool.views import (
-    SearchVideo,
-    SearchUser,
+    SearchVideo, SearchUser, SearchChat, SearchMessage,
     NotiView, DeleteNotiView,
     ChatView,
     MessageView,
+    add_member_to_chat, remove_member_to_chat,
     testview
 )
 
@@ -56,11 +56,16 @@ urlpatterns = [
 
     path('search/video', SearchVideo, name="search-video"),
     path('search/user', SearchUser, name="search-user"),
+    path('search/chat', SearchChat, name="search-chat"),
+    path('search/chat/<str:pk>/message', SearchMessage, name="search-message"),
+
     path('notification', NotiView, name="noti"),
     path("notification/<str:pk>", DeleteNotiView, name="noti-delete"),
 
     path("chat/", ChatView.as_view(), name="chat"),
     path("chat/<str:pk>/detail", MessageView.as_view(), name="message"),
+    path("chat/<str:pk>/add", add_member_to_chat, name="chat-add"),
+    path("chat/<str:pk>/remove", remove_member_to_chat, name="chat-remove"),
 
     path('test', testview)
 ]

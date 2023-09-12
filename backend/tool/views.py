@@ -52,6 +52,28 @@ def SearchUser(request):
     return Response(response_success(serializers.data), status=200)
 
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def SearchChat(request):
+    text = request.query_params['text']
+    chats = Chat.objects.filter(user=request.user, name__contains=text)
+    serializers = ChatSerializer(chats, many=True)
+    return Response(response_success(serializers.data), status=200)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def SearchMessage(request, pk):
+    text = request.query_params['text']
+    try:
+        chat = Chat.objects.get(id=pk)
+        message = Message.objects.filter(receiver=chat, context__contains=text)
+        serializers = MessageSerializer(message, many=True)
+        return Response(response_success(serializers.data), status=200)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+
+
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def NotiView(request):
@@ -131,6 +153,38 @@ class ChatView(APIView):
             return Response(response_error(str(e)), status=400)
 
 
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def add_member_to_chat(request, pk):
+    member = request.POST.get('member')
+    member_list = member.replace(' ', '').split(',')
+    try:
+        chat = Chat.objects.get(id=pk)
+        if chat.type == "1":
+            return Response(response_error("Couldn't add member to this chat."))
+        for i in member_list:
+            user = User.objects.get(username=i)
+            chat.member.add(user)
+        return Response(response_success("Add member succesful."), status=201)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def remove_member_to_chat(request, pk):
+    member = request.POST.get('member')
+    try:
+        chat = Chat.objects.get(id=pk)
+        if chat.type == "1":
+            return Response(response_error("Couldn't remove member to this chat."))
+        user = User.objects.get(username=member)
+        chat.member.remove(user)
+        return Response(response_success("Remove member succesful."), status=200)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+
+
 class MessageView(APIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
@@ -142,7 +196,9 @@ class MessageView(APIView):
             page = "1"
         try:
             chat = Chat.objects.get(id=pk, user=request.user)
-            message = self.queryset.filter(receiver=chat)[:(int(page)*20)]
+            message = self.queryset.filter(receiver=chat)[((int(page)-1)*20):(int(page)*20)]
+            for i in message:
+                i.reader.add(request.user)
             serializer = self.serializer_class(message, many=True)
             return Response(response_success(serializer.data), status=200)
         except Exception as e:
@@ -156,6 +212,18 @@ class MessageView(APIView):
             return Response(response_success("Delete successful."), status=200)
         except Exception as e:
             return Response(response_error(str(e)), status=400)
+    
+    def post(self, request, pk):
+        request_copy = request.data.copy()
+        request_copy['sender'] = request.user.id
+        request_copy['receiver'] = pk
+
+        serializer = MessageSerializer(data=request_copy)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(response_success(serializer.data), status=201)
+        else:
+            return Response(response_error(serializer.errors), status=400)
 
 
 def testview(request):
