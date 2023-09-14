@@ -89,7 +89,8 @@ class MessageSerializer(serializers.ModelSerializer):
         sender = self.initial_data['sender']
         receiver = self.initial_data['receiver']
 
-        member = Chat.objects.get(id=receiver).member.all()
+        chat = Chat.objects.get(id=receiver)
+        member = chat.member.all()
         sender_user = User.objects.get(id=sender)
         if sender_user not in member:
             raise serializers.ValidationError(response_error("You aren't a member of this group."))
@@ -98,5 +99,19 @@ class MessageSerializer(serializers.ModelSerializer):
         message = Message(**validated_data)
         message.save()
         message.reader.add(sender_user)
+
+        if message.context:
+            chat.last_message = {
+                "sender" : sender_user.last_name,
+                "text" : message.context    
+            }
+        elif message.media:
+            chat.last_message = {
+                "sender" : sender_user.last_name,
+                "text" : "Sended media file."
+            }
+        chat.last_action = datetime.now()
+        chat.save()
+
         return message
     

@@ -65,6 +65,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     followed_count = serializers.SerializerMethodField()
     follower_count = serializers.SerializerMethodField()
     video_count = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -84,4 +85,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     def get_video_count(self, obj):
         video = Video.objects.filter(user=obj)
         return video.count()
+
+    def get_full_name(self, obj):
+        return obj.get_full_name
     

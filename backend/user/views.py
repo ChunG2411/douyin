@@ -152,6 +152,8 @@ class LoginView(APIView):
             return Response(response_error("Password inccorect."), status=400)
         
         refresh = TokenObtainPairSerializer.get_token(user)
+        user.last_login = datetime.datetime.now()
+        user.save()
         token = {
             'access' : str(refresh.access_token),
             'refresh': str(refresh)
@@ -237,7 +239,8 @@ class UserVideoView(APIView):
         if request.user != user:
             return Response(response_error("Check user login."), status=400)
         
-        request_copy = request.data.copy()
+        request_copy = request.POST.copy()
+        request_copy['video'] = request.FILES.copy()['video']
         request_copy['user'] = user.id
         serializer = VideoSerializer(data=request_copy)
         if serializer.is_valid():

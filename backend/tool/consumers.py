@@ -3,7 +3,7 @@ from asgiref.sync import async_to_sync
 
 import json
 
-from .models import Noti
+from .models import Noti, Chat
 from user.models import User
 from video.models import Video
 from .serializers import NotiSerializer
@@ -13,7 +13,6 @@ class NotiConsumer(WebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.group_name = 'notification'
-        self.user = None
 
     def connect(self):
         self.accept()
@@ -51,6 +50,8 @@ class NotiConsumer(WebsocketConsumer):
                     if user.username not in noti.context:
                         noti.context.append(user.username)
                         noti.save()
+                    else:
+                        pass
             else:
                 context = []
                 context.append(user.username)
@@ -75,3 +76,52 @@ class NotiConsumer(WebsocketConsumer):
     def noti(self, e):
         self.send(text_data=json.dumps(e, default=str))
     
+
+class ChatConsumer(WebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.group_name = 'chat'
+    
+    def connect(self):
+        self.accept()
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name,
+            self.channel_name
+        )
+        
+    def disconnect(self, code):
+        async_to_sync(self.channel_layer.group_discard)(
+            self.group_name,
+            self.channel_name
+        )
+
+    def receive(self, text_data=None, bytes_data=None):
+        data_json = json.loads(text_data)
+        try:
+            sender = User.objects.get(id=data_json['sender'])
+            receiver = Chat.objects.get(id=data_json['receiver'])
+            member = receiver.member.values_list('username', flat=True)
+
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_name, {
+                    'type': 'chat',
+                    'data': {
+                        'sender': sender.username,
+                        'receiver': receiver.id,
+                        'member': list(member)
+                    }
+                }
+            )
+        except:
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_name, {
+                    'type': 'chat',
+                    'data': None
+                }
+            )
+    
+    def chat(self, e):
+        self.send(text_data=json.dumps(e, default=str))
+        
+
+
