@@ -23,7 +23,7 @@ from .serializers import NotiSerializer, ChatSerializer, MessageSerializer
 def SearchVideo(request):
     text = request.query_params['text']
 
-    if request.user:
+    if request.user.id != None:
         searchs = SearchRecent.objects.filter(user=request.user)
         if searchs.count() >= 5:
             searchs.last().delete()
@@ -39,7 +39,7 @@ def SearchVideo(request):
 def SearchUser(request):
     text = request.query_params['text']
 
-    if request.user:
+    if request.user.id != None:
         searchs = SearchRecent.objects.filter(user=request.user)
         if searchs.count() >= 5:
             searchs.last().delete()
@@ -50,6 +50,16 @@ def SearchUser(request):
     serializers = UserDetailSerializer(users, many=True)
 
     return Response(response_success(serializers.data), status=200)
+
+
+@api_view(['GET'])
+def RecentSearch(request):
+    print(request.user)
+    if request.user.id != None:
+        search_recent = SearchRecent.objects.filter(user=request.user)
+        return Response(response_success([i.text for i in search_recent]))
+    else:
+        return Response(response_success(""))
 
 
 @api_view(['GET'])
@@ -196,14 +206,15 @@ class MessageView(APIView):
             page = "1"
         try:
             chat = Chat.objects.get(id=pk, user=request.user)
-            message = self.queryset.filter(receiver=chat)[((int(page)-1)*20):(int(page)*20)]
+            message = self.queryset.filter(receiver=chat)[
+                ((int(page)-1)*20):(int(page)*20)]
             for i in message:
                 i.reader.add(request.user)
             serializer = self.serializer_class(message, many=True)
             return Response(response_success(serializer.data), status=200)
         except Exception as e:
             return Response(response_error(str(e)), status=400)
-    
+
     def delete(self, request, pk):
         message_id = request.GET.get('message')
         try:
@@ -212,7 +223,7 @@ class MessageView(APIView):
             return Response(response_success("Delete successful."), status=200)
         except Exception as e:
             return Response(response_error(str(e)), status=400)
-    
+
     def post(self, request, pk):
         request_copy = request.data.copy()
         request_copy['sender'] = request.user.id

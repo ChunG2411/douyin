@@ -154,12 +154,13 @@ class LoginView(APIView):
         refresh = TokenObtainPairSerializer.get_token(user)
         user.last_login = datetime.datetime.now()
         user.save()
-        token = {
+        response = {
+            'username': user.username,
             'access' : str(refresh.access_token),
             'refresh': str(refresh)
         }
 
-        return Response(response_success(token), status=201)
+        return Response(response_success(response), status=201)
 
 
 @permission_classes([permissions.IsAuthenticated])
