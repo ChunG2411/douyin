@@ -18,7 +18,7 @@ from video.views import (
     SaveVideoView
 )
 from tool.views import (
-    SearchVideo, SearchUser, SearchChat, SearchMessage, RecentSearch,
+    SearchVideo, SearchUser, SearchChat, SearchMessage, RecentSearch, SuggestSearch,
     NotiView, DeleteNotiView,
     ChatView,
     MessageView,
@@ -40,7 +40,7 @@ urlpatterns = [
     path('user/<str:username>/like', UserLikeVideoView.as_view(), name="user-like"),
     path('user/<str:username>/save', UserSaveVideoView.as_view(), name="user-save"),
     path('user/<str:username>/video/<str:pk>', delete_video, name="user-delete-video"),
-    path("user/<str:username>/follow", FollowView, name="user-follow"),
+    path('user/<str:username>/follow', FollowView, name="user-follow"),
 
     path('music/<str:pk>', MusicView.as_view(), name="music"),
     path('music/<str:pk>/video', get_videolist_of_music, name="music-video-list"),
@@ -59,6 +59,7 @@ urlpatterns = [
     path('search/chat', SearchChat, name="search-chat"),
     path('search/chat/<str:pk>/message', SearchMessage, name="search-message"),
     path('search/recent', RecentSearch, name="search-recent"),
+    path('search/suggest', SuggestSearch, name="search-suggest"),
 
     path('notification', NotiView, name="noti"),
     path("notification/<str:pk>", DeleteNotiView, name="noti-delete"),

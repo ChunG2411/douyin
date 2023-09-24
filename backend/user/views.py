@@ -51,7 +51,7 @@ class UserDetailView(APIView):
             serializer = UserDetailSerializer(user)
             return Response(response_success(serializer.data), status=200)
         else:
-            return Response(response_error("Username don't exist."))
+            return Response(response_error("Username don't exist."), status=400)
         
 
 @api_view(['PUT'])

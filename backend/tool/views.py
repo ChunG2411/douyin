@@ -54,12 +54,18 @@ def SearchUser(request):
 
 @api_view(['GET'])
 def RecentSearch(request):
-    print(request.user)
     if request.user.id != None:
         search_recent = SearchRecent.objects.filter(user=request.user)
         return Response(response_success([i.text for i in search_recent]))
     else:
         return Response(response_success(""))
+    
+
+@api_view(['GET'])
+def SuggestSearch(request):
+    text = request.query_params['text']
+    suggest = SearchRecent.objects.filter(text__istartswith=text)
+    return Response(response_success(list(set([i.text for i in suggest]))))
 
 
 @api_view(['GET'])

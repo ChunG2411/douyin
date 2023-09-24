@@ -1,17 +1,24 @@
 <script setup>
 import HeaderComponent from '../components/header.vue'
 import TaskbarComponent from '../components/taskbar.vue'
-import AuthenComponent from '../components/authen.vue'
 
+import { provide, reactive } from 'vue'
+
+const user_store = reactive({
+    user: JSON.parse(localStorage.getItem('user')),
+    is_authen: (localStorage.getItem('user') === null) ? false : true
+})
+
+provide("user_store", user_store)
 
 </script>
 
 <template>
-    <HeaderComponent/>
-    <TaskbarComponent/>
-    <AuthenComponent/>
+    <HeaderComponent />
+    <TaskbarComponent />
 
-    <main>
-    </main>
+    <div class="home">
+        <p>home page</p>
+    </div>
 </template>
 

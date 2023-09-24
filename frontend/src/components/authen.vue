@@ -1,51 +1,63 @@
 <script setup>
-import { ref } from 'vue'
-import axios from 'axios'
 import config from '../assets/config.js'
+
+import { ref, reactive, inject } from 'vue'
+import axios from 'axios'
 import { useRouter } from 'vue-router'
 
-const username_email = ref("")
-const password = ref("")
-const token = ref("")
-const error_msg = ref("")
-const queryTimeout = ref(null)
 const router = useRouter()
 
+const user = reactive({
+    username_email: "",
+    password: "",
+    username: "",
+    token: ""
+})
+const msg = reactive({
+    error: ref(null),
+    success: ref(null)
+})
+
+const queryTimeout = ref(null)
+const user_store = inject("user_store")
 
 const login = () => {
-    error_msg.value = ""
+    msg.error = null
 
     clearTimeout(queryTimeout.value);
     queryTimeout.value = setTimeout(async () => {
         try {
             const data = {
-                    "username_email": username_email.value,
-                    "password": password.value
-                }
+                "username_email": user.username_email,
+                "password": user.password
+            }
             const result = await axios.post(`${config.domain}/login`, data)
-            token.value = result.data.data
-            localStorage.setItem('user', JSON.stringify(token.value))
+            user.token = result.data.data.access
+            user.username = result.data.data.username
+
         } catch (error) {
-            error_msg.value = error.response.data.msg
+            msg.error = error.response.data.msg
             return
         }
 
         try {
             const header = {
-                    headers: { Authorization: `Bearer ${token.value.access}` }
-                }
-            await axios.get(`${config.domain}/online/${token.value.username}`, header)
-        } catch (error) {
-            error_msg.value = error
-        }
+                headers: { Authorization: `Bearer ${user.token}` }
+            }
+            await axios.get(`${config.domain}/online/${user.username}`, header)
 
+        } catch (error) {
+            msg.error = error
+            return
+        }
+        localStorage.setItem('user',
+            JSON.stringify({
+                username: user.username,
+                token: user.token
+            })
+        )
         location.reload()
     }, 300)
-
-    // router.push({
-    //     name: 'home'
-    // })
-    
 }
 
 const logout = () => {
@@ -53,30 +65,45 @@ const logout = () => {
     queryTimeout.value = setTimeout(async () => {
         try {
             const header = {
-                    headers: { Authorization: `Bearer ${token.value.access}` }
-                }
-            await axios.get(`${config.domain}/offline/${token.value.username}`, header)
-        } catch (error) {
-            error_msg.value = error
-        }
-    }, 300)
+                headers: { Authorization: `Bearer ${user_store.user["token"]}` }
+            }
+            await axios.get(`${config.domain}/offline/${user_store.user["username"]}`, header)
+            localStorage.removeItem('user')
 
-    localStorage.removeItem('user')
+        } catch (error) {
+            msg.error = error
+        }
+        location.reload()
+    }, 300)
+}
+
+const navigating_profile = () => {
+    router.push({
+        name: 'profile',
+        params: {
+            username: user_store.user["username"]
+        }
+    })
 }
 
 </script>
 
 <template>
-    <div class="login">
+    <div class="login" v-if="!user_store.is_authen">
         <form @submit.prevent="login">
-            <input type="text" placeholder="Username or email" v-model="username_email">
-            <input type="password" placeholder="Password" v-model="password">
+            <input type="text" placeholder="Username or email" v-model="user.username_email">
+            <input type="password" placeholder="Password" v-model="user.password">
             <button @click="login">Login</button>
-            <small class="error-msg">{{ error_msg }}</small>
+
+            <div class="login-msg">
+                <small class="error-msg" v-if="msg.error">{{ msg.error }}</small>
+                <small class="success-msg" v-if="msg.success">{{ msg.success }}</small>
+            </div>
         </form>
     </div>
 
-    <div class="logout">
+    <div class="profile" v-else>
+        <button @click="navigating_profile">profile</button>
         <button @click="logout">logout</button>
     </div>
 </template>
