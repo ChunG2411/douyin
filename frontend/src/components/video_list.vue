@@ -13,7 +13,7 @@ watch(props, (oldvalue, currentvalue) => {
     api_get_video_list(currentvalue.action)
 })
 
-const user_store = inject("user_store")
+const user_localstore = inject("user_localstore")
 
 let queryTimeout = null
 const video_list = ref(null)
@@ -24,7 +24,7 @@ const api_get_video_list = (value) => {
     queryTimeout = setTimeout(async () => {
         try {
             const header = {
-                headers: { Authorization: `Bearer ${user_store.user["token"]}` }
+                headers: { Authorization: `Bearer ${user_localstore.user["token"]}` }
             }
             const result = await axios.get(`${config.domain}/user/${props.username}/${value}`, header)
             video_list.value = result.data.data

@@ -382,3 +382,28 @@ def FollowView(request, username):
     except Exception as e:
         return Response(response_error(str(e)), status=400)
     
+
+@api_view(["GET"])
+def GetUserFollowed(request, username):
+    try:
+        user = User.objects.get(username=username)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+    
+    user_followed = UserFollowed.objects.get(user=user).followed
+    serializers = UserDetailSerializer(user_followed, many=True)
+
+    return Response(response_success(serializers.data), status=200)
+
+
+@api_view(["GET"])
+def GetUserFollower(request, username):
+    try:
+        user = User.objects.get(username=username)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+    
+    user_follower = UserFollower.objects.get(user=user).follower
+    serializers = UserDetailSerializer(user_follower, many=True)
+
+    return Response(response_success(serializers.data), status=200)

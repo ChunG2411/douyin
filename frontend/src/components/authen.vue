@@ -19,7 +19,7 @@ const msg = reactive({
 })
 
 const queryTimeout = ref(null)
-const user_store = inject("user_store")
+const user_localstore = inject("user_localstore")
 
 const login = () => {
     msg.error = null
@@ -65,9 +65,9 @@ const logout = () => {
     queryTimeout.value = setTimeout(async () => {
         try {
             const header = {
-                headers: { Authorization: `Bearer ${user_store.user["token"]}` }
+                headers: { Authorization: `Bearer ${user_localstore.user["token"]}` }
             }
-            await axios.get(`${config.domain}/offline/${user_store.user["username"]}`, header)
+            await axios.get(`${config.domain}/offline/${user_localstore.user["username"]}`, header)
             localStorage.removeItem('user')
 
         } catch (error) {
@@ -77,19 +77,10 @@ const logout = () => {
     }, 300)
 }
 
-const navigating_profile = () => {
-    router.push({
-        name: 'profile',
-        params: {
-            username: user_store.user["username"]
-        }
-    })
-}
-
 </script>
 
 <template>
-    <div class="login" v-if="!user_store.is_authen">
+    <div class="login" v-if="!user_localstore.is_authen">
         <form @submit.prevent="login">
             <input type="text" placeholder="Username or email" v-model="user.username_email">
             <input type="password" placeholder="Password" v-model="user.password">
@@ -103,7 +94,7 @@ const navigating_profile = () => {
     </div>
 
     <div class="profile" v-else>
-        <button @click="navigating_profile">profile</button>
+        <a :href="'/profile/' + user_localstore.user['username']">my profile</a>
         <button @click="logout">logout</button>
     </div>
 </template>

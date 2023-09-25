@@ -4,7 +4,8 @@ from user.views import (
     UserDetailView, ModifyUser,
     LoginView, LogoutView,
     user_online, user_offline,
-    UserVideoView, UserLikeVideoView, UserSaveVideoView, delete_video, FollowView
+    UserVideoView, UserLikeVideoView, UserSaveVideoView, delete_video, FollowView,
+    GetUserFollowed, GetUserFollower
 )
 from video.views import (
     MusicView,
@@ -41,6 +42,8 @@ urlpatterns = [
     path('user/<str:username>/save', UserSaveVideoView.as_view(), name="user-save"),
     path('user/<str:username>/video/<str:pk>', delete_video, name="user-delete-video"),
     path('user/<str:username>/follow', FollowView, name="user-follow"),
+    path('user/<str:username>/followed-list', GetUserFollowed, name="user-followed-list"),
+    path('user/<str:username>/follower-list', GetUserFollower, name="user-follower-list"),
 
     path('music/<str:pk>', MusicView.as_view(), name="music"),
     path('music/<str:pk>/video', get_videolist_of_music, name="music-video-list"),

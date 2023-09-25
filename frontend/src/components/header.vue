@@ -1,5 +1,5 @@
 <script setup>
-import AuthenComponent from '../components/authen.vue'
+import AuthenComponent from './authen.vue'
 import config from '../assets/config.js'
 
 import { ref, reactive, inject } from 'vue'
@@ -18,7 +18,7 @@ const search = reactive({
     recent: ref(null)
 })
 
-const user_store = inject("user_store")
+const user_localstore = inject("user_localstore")
 
 
 const api_get_search_recent = () => {
@@ -26,7 +26,7 @@ const api_get_search_recent = () => {
     queryTimeout = setTimeout(async () => {
         try {
             const header = {
-                headers: { Authorization: `Bearer ${user_store.user["token"]}` }
+                headers: { Authorization: `Bearer ${user_localstore.user["token"]}` }
             }
             const result = await axios.get(`${config.domain}/search/recent`, header)
             search.recent = result.data.data
@@ -57,7 +57,7 @@ const get_search_suggest = () => {
         search.suggest = null
         search.recent = null
 
-        if (user_store.is_authen) {
+        if (user_localstore.is_authen) {
             api_get_search_recent()
         }
     }
@@ -70,7 +70,7 @@ const get_search_suggest = () => {
 const click_input = () => {
     show_search_popup.value = true
 
-    if (user_store.is_authen) {
+    if (user_localstore.is_authen) {
         api_get_search_recent()
     }
 }
@@ -86,17 +86,11 @@ const clear_context = () => {
     search.suggest = null
 }
 
-const navigating_home =()=>{
-    router.push('/')
-}
-
 </script>
 
 <template>
     <div class="header">
-        <div class="logo" @click="navigating_home">
-            <p>Home</p>
-        </div>
+        <router-link to="/">home</router-link>
 
         <div class="search">
             <input type="text" id="search-bar" placeholder="What do you want to find?" v-model="search.value"
@@ -125,6 +119,8 @@ const navigating_home =()=>{
     margin: 0;
     width: 100%;
     height: 50px;
-    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 </style>
