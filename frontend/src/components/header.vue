@@ -5,10 +5,9 @@ import config from '../assets/config.js'
 import { ref, reactive, inject } from 'vue'
 import axios from 'axios'
 import { vOnClickOutside } from '@vueuse/components'
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
 const show_search_popup = ref(false)
+const show_login_popup = ref(false)
 let queryTimeout = null
 
 const search = reactive({
@@ -86,6 +85,27 @@ const clear_context = () => {
     search.suggest = null
 }
 
+const logout = () => {
+    clearTimeout(queryTimeout);
+    queryTimeout = setTimeout(async () => {
+        try {
+            const header = {
+                headers: { Authorization: `Bearer ${user_localstore.user["token"]}` }
+            }
+            await axios.get(`${config.domain}/offline/${user_localstore.user["username"]}`, header)
+            localStorage.removeItem('user')
+
+        } catch (error) {
+            msg.error = error
+        }
+        location.reload()
+    }, 100)
+}
+
+const close_popup = [() => {
+    show_login_popup.value = !show_login_popup.value
+}]
+
 </script>
 
 <template>
@@ -108,7 +128,19 @@ const clear_context = () => {
         </div>
 
         <div class="action">
-            <AuthenComponent />
+            <div class="profile" v-if="user_localstore.is_authen">
+                <router-link :to="{ name: 'profile', params: { username: user_localstore.user['username'] } }">
+                    profile
+                </router-link>
+                <button @click="logout">logout</button>
+            </div>
+            <div class="login" v-else>
+                <button @click="show_login_popup = !show_login_popup">login</button>
+            </div>
+        </div>
+
+        <div class="popup" v-if="show_login_popup">
+            <AuthenComponent v-on-click-outside="close_popup" />
         </div>
 
     </div>
@@ -118,9 +150,19 @@ const clear_context = () => {
 .header {
     margin: 0;
     width: 100%;
-    height: 50px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+.popup {
+    background: rgba(226, 226, 226, 0.7);
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    place-items: center;
+    display: grid;
+    z-index: 100;
+    margin: 0;
 }
 </style>

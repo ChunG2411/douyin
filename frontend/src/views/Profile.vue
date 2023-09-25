@@ -9,10 +9,11 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 const route = useRoute()
 
-watch(() => route.params.username, () => {
-    console.log(route.params);
-    api_get_user_infor()
+watch(() => route.params.username, (currentvalue, oldvalue) => {
+    check_my_profile(currentvalue)
+    api_get_user_infor(currentvalue)
 })
+
 const profile = reactive({
     infor: null,
     is_my_profile: false
@@ -20,7 +21,7 @@ const profile = reactive({
 
 const user_localstore = inject("user_localstore")
 
-const params_user = route.params.username
+const params_user = ref(route.params.username)
 
 let queryTimeout = null
 const msg_error = ref(null)
@@ -28,29 +29,32 @@ const action = ref("video")
 const follow_status = ref('')
 
 
-if (user_localstore.is_authen) {
-    if (params_user === user_localstore.user["username"]) {
-        profile.is_my_profile = true
+const check_my_profile = (username) => {
+    if (user_localstore.is_authen) {
+        if (username === user_localstore.user["username"]) {
+            profile.is_my_profile = true
+        }
+        else {
+            profile.is_my_profile = false
+        }
     }
 }
+check_my_profile(params_user.value)
 
-const api_get_user_infor = () => {
-    clearTimeout(queryTimeout)
-    queryTimeout = setTimeout(async () => {
-        try {
-            const result = await axios.get(`${config.domain}/user/${params_user}`)
-            profile.infor = result.data.data
-            return
-        } catch (error) {
-            console.log(error)
-            msg_error.value = error.response.data.msg
-        }
-    }, 100)
+const api_get_user_infor = (username) => {
+    axios.get(`${config.domain}/user/${username}`)
+        .then(response => {
+            profile.infor = response.data.data
+            params_user.value = username
+            action.value = "video"
+        })
+        .catch(e => {
+            console.log(e)
+            msg_error.value = e
+        })
 }
-onMounted(() => {
-    console.log(route.params.username);
-    api_get_user_infor();
-})
+api_get_user_infor(params_user.value);
+
 
 const modify_infor = () => {
 

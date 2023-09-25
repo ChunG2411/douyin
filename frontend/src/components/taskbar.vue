@@ -1,19 +1,33 @@
 <script setup>
-import { reactive, inject } from "vue"
+import AuthenComponent from './authen.vue'
+import { vOnClickOutside } from '@vueuse/components'
+
+import { reactive, inject, ref } from "vue"
 
 const user_localstore = inject("user_localstore")
+const show_login_popup = ref(false)
 
+const close_popup = [() => {
+    show_login_popup.value = !show_login_popup.value
+}]
 
 </script>
 
 <template>
   <div class="taskbar">
     <router-link to="/">home</router-link>
-    <!-- <router-link :to="'/profile/' + user_localstore.user['username']" v-if="user_localstore.is_authen">profile</router-link>
-    <router-link :to="'/profile/chung'" v-if="user_localstore.is_authen">profile</router-link>
-    <button v-else>profile</button> -->
-    <router-link :to="{name: 'profile', params: {username: user_localstore.user['username']}}">admin</router-link>
-    <router-link :to="{name: 'profile', params: {username: 'chung'}}">chung</router-link>
+
+    <router-link :to="{ name: 'profile', params: { username: user_localstore.user['username'] } }"
+      v-if="user_localstore.is_authen">
+      profile
+    </router-link>
+    <button v-else @click="show_login_popup = !show_login_popup">profile</button>
+
+    <router-link :to="{ name: 'profile', params: { username: 'chung' } }">chung</router-link>
+  </div>
+
+  <div class="popup" v-if="show_login_popup">
+    <AuthenComponent v-on-click-outside="close_popup" />
   </div>
 </template>
 
@@ -25,5 +39,16 @@ const user_localstore = inject("user_localstore")
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.popup {
+  background: rgba(226, 226, 226, 0.7);
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  place-items: center;
+  display: grid;
+  z-index: 100;
+  margin: 0;
 }
 </style>

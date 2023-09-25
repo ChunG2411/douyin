@@ -3,9 +3,6 @@ import config from '../assets/config.js'
 
 import { ref, reactive, inject } from 'vue'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 
 const user = reactive({
     username_email: "",
@@ -14,18 +11,17 @@ const user = reactive({
     token: ""
 })
 const msg = reactive({
-    error: ref(null),
-    success: ref(null)
+    error: null,
+    success: null
 })
 
-const queryTimeout = ref(null)
-const user_localstore = inject("user_localstore")
+let queryTimeout = null
 
 const login = () => {
     msg.error = null
 
-    clearTimeout(queryTimeout.value);
-    queryTimeout.value = setTimeout(async () => {
+    clearTimeout(queryTimeout)
+    queryTimeout = setTimeout(async () => {
         try {
             const data = {
                 "username_email": user.username_email,
@@ -34,12 +30,25 @@ const login = () => {
             const result = await axios.post(`${config.domain}/login`, data)
             user.token = result.data.data.access
             user.username = result.data.data.username
-
+            msg.success = "login success"
         } catch (error) {
             msg.error = error.response.data.msg
             return
         }
 
+        localStorage.setItem('user',
+            JSON.stringify({
+                username: user.username,
+                token: user.token
+            })
+        )
+        api_user_online()
+    }, 100)
+}
+
+const api_user_online = () => {
+    clearTimeout(queryTimeout)
+    queryTimeout = setTimeout(async () => {
         try {
             const header = {
                 headers: { Authorization: `Bearer ${user.token}` }
@@ -50,37 +59,14 @@ const login = () => {
             msg.error = error
             return
         }
-        localStorage.setItem('user',
-            JSON.stringify({
-                username: user.username,
-                token: user.token
-            })
-        )
-        location.reload()
-    }, 300)
-}
-
-const logout = () => {
-    clearTimeout(queryTimeout.value);
-    queryTimeout.value = setTimeout(async () => {
-        try {
-            const header = {
-                headers: { Authorization: `Bearer ${user_localstore.user["token"]}` }
-            }
-            await axios.get(`${config.domain}/offline/${user_localstore.user["username"]}`, header)
-            localStorage.removeItem('user')
-
-        } catch (error) {
-            msg.error = error
-        }
-        location.reload()
-    }, 300)
+    }, 100)
+    location.reload()
 }
 
 </script>
 
 <template>
-    <div class="login" v-if="!user_localstore.is_authen">
+    <div class="login">
         <form @submit.prevent="login">
             <input type="text" placeholder="Username or email" v-model="user.username_email">
             <input type="password" placeholder="Password" v-model="user.password">
@@ -92,9 +78,10 @@ const logout = () => {
             </div>
         </form>
     </div>
-
-    <div class="profile" v-else>
-        <a :href="'/profile/' + user_localstore.user['username']">my profile</a>
-        <button @click="logout">logout</button>
-    </div>
 </template>
+
+<style>
+.login {
+    background: white;
+}
+</style>
