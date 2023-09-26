@@ -15,27 +15,34 @@ watch(props, (oldvalue, currentvalue) => {
 
 const user_localstore = inject("user_localstore")
 
-let queryTimeout = null
 const video_list = ref(null)
 const msg_error = ref(null)
 
 const api_get_video_list = (value) => {
-    clearTimeout(queryTimeout)
-    queryTimeout = setTimeout(async () => {
-        try {
-            const header = {
-                headers: { Authorization: `Bearer ${user_localstore.user["token"]}` }
-            }
-            const result = await axios.get(`${config.domain}/user/${props.username}/${value}`, header)
-            video_list.value = result.data.data
-            return
-        } catch (error) {
-            console.log(error)
-            msg_error.value = error.response
-        }
-    }, 100)
-}
 
+    if (user_localstore.is_authen) {
+        const header = {
+            headers: { Authorization: `Bearer ${user_localstore.user["token"]}` }
+        }
+        axios.get(`${config.domain}/user/${props.username}/${value}`, header)
+            .then(response => {
+                video_list.value = response.data.data
+            })
+            .catch(e => {
+                msg_error.value = e
+            })
+    }
+    else {
+        axios.get(`${config.domain}/user/${props.username}/${value}`)
+            .then(response => {
+                video_list.value = response.data.data
+            })
+            .catch(e => {
+                msg_error.value = e
+            })
+    }
+
+}
 api_get_video_list('video')
 
 </script>

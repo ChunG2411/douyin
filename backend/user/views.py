@@ -97,11 +97,11 @@ def ModifyUser(request, pk):
     
     # check gender
     if gender:
-        if gender == "M":
+        if gender == "Male":
             user.gender = "Male"
-        elif gender == "F":
+        elif gender == "Female":
             user.gender = "Female"
-        elif gender == "O":
+        elif gender == "Other":
             user.gender = "Other"
         else:
             return Response(response_error("Gender must in [M, F, O]."), status=400)

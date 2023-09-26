@@ -157,12 +157,13 @@ const close_popup = [() => {
 
 .popup {
     background: rgba(226, 226, 226, 0.7);
+    position: absolute;
     width: 100%;
     height: 100%;
-    position: fixed;
-    place-items: center;
     display: grid;
+    place-items: center;
     z-index: 100;
-    margin: 0;
+    top: 0;
+    left: 0;
 }
 </style>

@@ -70,7 +70,7 @@ const api_user_online = () => {
         <form @submit.prevent="login">
             <input type="text" placeholder="Username or email" v-model="user.username_email">
             <input type="password" placeholder="Password" v-model="user.password">
-            <button @click="login">Login</button>
+            <button type="submit">Login</button>
 
             <div class="login-msg">
                 <small class="error-msg" v-if="msg.error">{{ msg.error }}</small>

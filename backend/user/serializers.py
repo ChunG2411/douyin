@@ -20,14 +20,14 @@ class UserRegisterSerializers(serializers.ModelSerializer):
         # check gender
         avatar = None
         if gender:
-            if gender == "M":
-                validated_data['gender'] = "Male"
+            if gender == "Male":
+                # validated_data['gender'] = "Male"
                 avatar = "template/male.jpg"
-            elif gender == "F":
-                validated_data['gender'] = "Female"
+            elif gender == "Female":
+                # validated_data['gender'] = "Female"
                 avatar = "template/female.jpg"
-            elif gender == "O":
-                validated_data['gender'] = "Other"
+            elif gender == "Other":
+                # validated_data['gender'] = "Other"
                 avatar = "template/other.jpg"
             else:
                 raise serializers.ValidationError(response_error("Gender must in [M, F, O]."))
