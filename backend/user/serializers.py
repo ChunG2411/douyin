@@ -7,7 +7,7 @@ from social_network.config import response_error
 class UserRegisterSerializers(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password']
+        fields = ['id', 'username', 'first_name', 'last_name', 'gender', 'email', 'password']
         extra_kwargs = {
             'password': {'write_only': 'true'}
         }
@@ -21,13 +21,10 @@ class UserRegisterSerializers(serializers.ModelSerializer):
         avatar = None
         if gender:
             if gender == "Male":
-                # validated_data['gender'] = "Male"
                 avatar = "template/male.jpg"
             elif gender == "Female":
-                # validated_data['gender'] = "Female"
                 avatar = "template/female.jpg"
             elif gender == "Other":
-                # validated_data['gender'] = "Other"
                 avatar = "template/other.jpg"
             else:
                 raise serializers.ValidationError(response_error("Gender must in [M, F, O]."))

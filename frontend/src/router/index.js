@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../views/Home.vue'
-import Profile from '../views/Profile.vue'
+import GuestProfile from '../views/GuestProfile.vue'
+import MyProfile from '../views/MyProfile.vue'
+import Search from '../views/Search.vue';
 
 const routes = [
     {
@@ -10,11 +12,20 @@ const routes = [
         component: Home
     },
     {
-        name: "profile",
+        name: "guest_profile",
         path: "/profile/:username",
-        component: Profile
+        component: GuestProfile
+    },
+    {
+        name: "my_profile",
+        path:"/profile/self",
+        component: MyProfile
+    },
+    {
+        name: "search",
+        path:"/search/:text",
+        component: Search
     }
-
 ]
 const router = createRouter({
     history: createWebHistory(),

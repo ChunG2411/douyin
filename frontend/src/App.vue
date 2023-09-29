@@ -1,15 +1,6 @@
 <script setup>
-import HeaderComponent from './components/header.vue'
 import TaskbarComponent from './components/taskbar.vue'
-
-import { reactive, provide } from "vue"
-
-const user_localstore = reactive({
-    user: JSON.parse(localStorage.getItem('user')),
-    is_authen: (localStorage.getItem('user') === null) ? false : true
-})
-
-provide("user_localstore", user_localstore)
+import HeaderComponent from './components/header.vue'
 
 </script>
 
@@ -21,3 +12,11 @@ provide("user_localstore", user_localstore)
     <router-view></router-view>
   </div>
 </template>
+
+<style>
+.main{
+  top: 50px;
+  left: 50px;
+  position: relative;
+}
+</style>

@@ -64,7 +64,7 @@ def RecentSearch(request):
 @api_view(['GET'])
 def SuggestSearch(request):
     text = request.query_params['text']
-    suggest = SearchRecent.objects.filter(text__istartswith=text)
+    suggest = SearchRecent.objects.filter(text__istartswith=text)[:5]
     return Response(response_success(list(set([i.text for i in suggest]))))
 
 

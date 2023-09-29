@@ -1,87 +1,134 @@
 <script setup>
-import config from '../assets/config.js'
+import { Store } from '../assets/store.js'
 
-import { ref, reactive, inject } from 'vue'
+import { ref, reactive } from 'vue'
 import axios from 'axios'
 
-const user = reactive({
+const store = Store()
+
+const user_login = reactive({
     username_email: "",
     password: "",
-    username: "",
-    token: ""
 })
-const msg = reactive({
-    error: null,
-    success: null
+const user_register = reactive({
+    email: "",
+    first_name: "",
+    last_name: "",
+    gender: "",
+    password: ""
 })
 
-let queryTimeout = null
+const show_logup = ref(false)
 
 const login = () => {
-    msg.error = null
-
-    clearTimeout(queryTimeout)
-    queryTimeout = setTimeout(async () => {
-        try {
-            const data = {
-                "username_email": user.username_email,
-                "password": user.password
+    const data = {
+        "username_email": user_login.username_email,
+        "password": user_login.password
+    }
+    axios.post(`${store.domain}/api/login`, data)
+        .then(response => {
+            localStorage.setItem('token', response.data.data.access)
+            localStorage.setItem('username', response.data.data.username)
+            api_user_online()
+        })
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
             }
-            const result = await axios.post(`${config.domain}/login`, data)
-            user.token = result.data.data.access
-            user.username = result.data.data.username
-            msg.success = "login success"
-        } catch (error) {
-            msg.error = error.response.data.msg
-            return
-        }
-
-        localStorage.setItem('user',
-            JSON.stringify({
-                username: user.username,
-                token: user.token
-            })
-        )
-        api_user_online()
-    }, 100)
+            catch {
+                store.msg_errorr = error
+            }
+        })
 }
 
 const api_user_online = () => {
-    clearTimeout(queryTimeout)
-    queryTimeout = setTimeout(async () => {
-        try {
-            const header = {
-                headers: { Authorization: `Bearer ${user.token}` }
+    const header = {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }
+    axios.get(`${store.domain}/api/online`, header)
+        .then(response => {
+            location.reload()
+        })
+        .catch(error => {
+            localStorage.removeItem('token')
+            try {
+                store.msg_error = error.response.data.msg
             }
-            await axios.get(`${config.domain}/online/${user.username}`, header)
+            catch {
+                store.msg_error = error
+            }
 
-        } catch (error) {
-            msg.error = error
-            return
-        }
-    }, 100)
-    location.reload()
+        })
+}
+
+const logup = () => {
+    axios.post(`${store.domain}/api/user/register`, user_register)
+        .then(response => {
+            store.msg_success = "Create successful."
+        })
+        .catch(error => {
+            try {
+                store.msg_errorr = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
 }
 
 </script>
 
 <template>
-    <div class="login">
-        <form @submit.prevent="login">
-            <input type="text" placeholder="Username or email" v-model="user.username_email">
-            <input type="password" placeholder="Password" v-model="user.password">
-            <button type="submit">Login</button>
+    <div class="authen">
+        <div class="logup" v-if="show_logup">
+            <form @submit.prevent="logup">
+                <input type="text" placeholder="Email" v-model="user_register.email">
+                <input type="text" placeholder="First name" v-model="user_register.first_name">
+                <input type="text" placeholder="Last name" v-model="user_register.last_name">
+                <select name="gender" v-model="user_register.gender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="password" placeholder="Password" v-model="user_register.password">
+                <button type="submit">Logup</button>
 
-            <div class="login-msg">
-                <small class="error-msg" v-if="msg.error">{{ msg.error }}</small>
-                <small class="success-msg" v-if="msg.success">{{ msg.success }}</small>
+                <div class="msg">
+                    <small class="success-msg" v-if="store.msg_success">{{ store.msg_success }}</small>
+                    <small class="error-msg" v-if="store.msg_error">{{ store.msg_error }}</small>
+                </div>
+            </form>
+
+            <div class="action">
+                <button @click="show_logup = false">Login</button>
             </div>
-        </form>
+        </div>
+
+        <div class="login" v-else>
+            <form @submit.prevent="login">
+                <input type="text" placeholder="Username or email" v-model="user_login.username_email">
+                <input type="password" placeholder="Password" v-model="user_login.password">
+                <button type="submit">Login</button>
+
+                <div class="msg">
+                    <small class="error-msg" v-if="store.msg_error">{{ store.msg_error }}</small>
+                </div>
+            </form>
+
+            <div class="action">
+                <button @click="show_logup = true">Create new account</button>
+            </div>
+        </div>
     </div>
 </template>
 
 <style>
-.login {
+.authen {
     background: white;
+}
+
+.logup form {
+    display: flex;
+    flex-direction: column;
 }
 </style>

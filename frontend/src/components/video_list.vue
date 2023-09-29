@@ -1,44 +1,52 @@
 <script setup>
-import config from '../assets/config.js'
+import { Store } from '../assets/store'
 
-import { ref, reactive, inject, defineProps, watch } from 'vue'
+import { ref, defineProps, watch } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
-    action: String,
+    active: String,
     username: String
 })
 
 watch(props, (oldvalue, currentvalue) => {
-    api_get_video_list(currentvalue.action)
+    api_get_video_list(currentvalue.active)
 })
 
-const user_localstore = inject("user_localstore")
-
+const store = Store()
 const video_list = ref(null)
-const msg_error = ref(null)
+
 
 const api_get_video_list = (value) => {
-
-    if (user_localstore.is_authen) {
+    if (store.is_login) {
         const header = {
-            headers: { Authorization: `Bearer ${user_localstore.user["token"]}` }
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
-        axios.get(`${config.domain}/user/${props.username}/${value}`, header)
+        axios.get(`${store.domain}/api/user/${props.username}/${value}`, header)
             .then(response => {
                 video_list.value = response.data.data
             })
-            .catch(e => {
-                msg_error.value = e
+            .catch(error => {
+                try {
+                    store.error = error.response.data.msg
+                }
+                catch {
+                    store.error = error
+                }
             })
     }
     else {
-        axios.get(`${config.domain}/user/${props.username}/${value}`)
+        axios.get(`${store.domain}/api/user/${props.username}/${value}`)
             .then(response => {
                 video_list.value = response.data.data
             })
-            .catch(e => {
-                msg_error.value = e
+            .catch(error => {
+                try {
+                    store.error = error.response.data.msg
+                }
+                catch {
+                    store.error = error
+                }
             })
     }
 

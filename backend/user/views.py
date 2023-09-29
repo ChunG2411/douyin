@@ -52,7 +52,15 @@ class UserDetailView(APIView):
             return Response(response_success(serializer.data), status=200)
         else:
             return Response(response_error("Username don't exist."), status=400)
-        
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def GetMyProfile(request):
+    user = request.user
+    serializer = UserDetailSerializer(user)
+    return Response(response_success(serializer.data), status=200)
+
 
 @api_view(['PUT'])
 @permission_classes([permissions.IsAuthenticated])
@@ -79,7 +87,7 @@ def ModifyUser(request, pk):
     if username and username != "":
         try:
             User.objects.get(username=username)
-            return Response(response_error("Username already exist."))
+            return Response(response_error("Username already exist."), status=400)
         except:
             user.username = username
 
@@ -114,7 +122,9 @@ def ModifyUser(request, pk):
             user.birth = birth
         except Exception as e:
             return Response(response_error(str(e)), status=400)
-    
+    else:
+        user.birth = ""
+        
     # check name
     if first_name:
         user.first_name = first_name
@@ -182,16 +192,8 @@ class LogoutView(APIView):
     
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def user_online(request, username):
-    user = None
-    try:
-        user = User.objects.get(username=username)
-        if request.user != user:
-            return Response(response_error("Check user login."), status=400)
-    except:
-        return Response(response_error("User don't exist."), status=400)
-    
-    status = UserStatus.objects.get_or_create(user=user)
+def user_online(request):
+    status = UserStatus.objects.get_or_create(user=request.user)
     status[0].status = True
     status[0].save()
 
@@ -200,16 +202,8 @@ def user_online(request, username):
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def user_offline(request, username):
-    user = None
-    try:
-        user = User.objects.get(username=username)
-        if request.user != user:
-            return Response(response_error("Check user login"), status=400)
-    except:
-        return Response(response_error("User don't exist."), status=400)
-    
-    status = UserStatus.objects.get_or_create(user=user)
+def user_offline(request):    
+    status = UserStatus.objects.get_or_create(user=request.user)
     status[0].status = False
     status[0].save()
 
