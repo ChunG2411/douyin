@@ -3,7 +3,7 @@ import AuthenComponent from './authen.vue'
 import { Store } from '../assets/store'
 
 import { vOnClickOutside } from '@vueuse/components'
-import { reactive, inject, ref } from "vue"
+import { ref } from "vue"
 
 const store = Store()
 

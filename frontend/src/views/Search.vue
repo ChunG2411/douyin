@@ -1,9 +1,11 @@
 <script setup>
 import { Store } from '../assets/store'
+import AuthenComponent from '../components/authen.vue'
+import CommentComponent from '../components/comment_list.vue'
 
 import { ref, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
-
+import { vOnClickOutside } from '@vueuse/components'
 import axios from 'axios'
 
 
@@ -15,11 +17,17 @@ watch(() => route.params.text, (currentvalue, oldvalue) => {
 })
 
 const active_bar = ref('video')
+const my_user = localStorage.getItem('username')
 const search_result = reactive({
     video: [],
     user: []
 })
-const videoVisibilityMap = ref({})
+const show_login_popup = ref(false)
+const show_comment = ref(false)
+
+const close_popup = [() => {
+    show_login_popup.value = false
+}]
 
 
 const api_search_video = () => {
@@ -85,6 +93,82 @@ const search_user = () => {
     api_search_user()
 }
 
+const like_video = (id) => {
+    if (store.is_login) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        axios.get(`${store.domain}/api/video/${id}/like`, header)
+            .then(response => {
+                if (response.data.data == "Liked.") {
+                    for (let i = 0; i < search_result.video.length; i++) {
+                        if (search_result.video[i].id == id) {
+                            search_result.video[i].liked = true
+                            search_result.video[i].like_count += 1
+                        }
+                    }
+                }
+                else {
+                    for (let i = 0; i < search_result.video.length; i++) {
+                        if (search_result.video[i].id == id) {
+                            search_result.video[i].liked = false
+                            search_result.video[i].like_count -= 1
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+    else {
+        show_login_popup.value = true
+    }
+}
+
+const save_video = (id) => {
+    if (store.is_login) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        axios.get(`${store.domain}/api/video/${id}/save`, header)
+            .then(response => {
+                if (response.data.data == "Saved.") {
+                    for (let i = 0; i < search_result.video.length; i++) {
+                        if (search_result.video[i].id == id) {
+                            search_result.video[i].saved = true
+                            search_result.video[i].save_count += 1
+                        }
+                    }
+                }
+                else {
+                    for (let i = 0; i < search_result.video.length; i++) {
+                        if (search_result.video[i].id == id) {
+                            search_result.video[i].saved = false
+                            search_result.video[i].save_count -= 1
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+    else {
+        show_login_popup.value = true
+    }
+}
+
 </script>
 
 <template>
@@ -108,23 +192,35 @@ const search_user = () => {
                 </div>
             </div>
 
-            <div class="search_board_user" v-else-if="active_bar == 'video'">
+            <div class="search_board_video" v-else-if="active_bar == 'video'">
                 <div v-if="search_result.video.length > 0">
                     <div v-for="video in search_result.video">
                         <div>
-                            <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }">
-                                <img :src="store.domain + video.user_infor.avatar">
+                            <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }" v-if="my_user!=video.user_infor.username">
+                                <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar">
+                                <p>{{ video.user_infor.full_name }}</p>
+                            </router-link>
+                            <router-link to="/profile/self" v-else>
+                                <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar">
                                 <p>{{ video.user_infor.full_name }}</p>
                             </router-link>
                         </div>
                         <div>
                             <p>{{ video.descrip }}</p>
-                            <video :src="store.domain + video.video" controls />
+                            <video :src="video.video" controls />
                         </div>
                         <div>
-                            <button>{{ video.like_count }}</button>
-                            <button>{{ video.comment_count }}</button>
-                            <button>{{ video.save_count }}</button>
+                            <button @click="like_video(video.id)" v-if="video.liked">liked: {{ video.like_count }}</button>
+                            <button @click="like_video(video.id)" v-else>like: {{ video.like_count }}</button>
+
+                            <button @click="show_comment = !show_comment">{{ video.comment_count }}</button>
+
+                            <button @click="save_video(video.id)" v-if="video.saved">saved: {{ video.save_count }}</button>
+                            <button @click="save_video(video.id)" v-else>save: {{ video.save_count }}</button>
+                        </div>
+                        <div class="comment_board" v-if="show_comment">
+                            <CommentComponent :video_id="video.id" />
+                            <button @click="show_comment = false">close</button>
                         </div>
                     </div>
                 </div>
@@ -134,5 +230,9 @@ const search_user = () => {
 
             </div>
         </div>
+    </div>
+
+    <div class="popup" v-if="show_login_popup">
+        <AuthenComponent v-on-click-outside="close_popup" />
     </div>
 </template>

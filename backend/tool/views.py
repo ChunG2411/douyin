@@ -30,7 +30,7 @@ def SearchVideo(request):
         SearchRecent.objects.create(user=request.user, text=text)
 
     videos = Video.objects.filter(descrip__contains=text)
-    serializers = VideoSerializer(videos, many=True)
+    serializers = VideoSerializer(videos, many=True, context={'request': request})
 
     return Response(response_success(serializers.data), status=200)
 
