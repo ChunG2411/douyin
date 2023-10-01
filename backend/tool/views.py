@@ -45,7 +45,7 @@ def SearchUser(request):
             searchs.last().delete()
         SearchRecent.objects.create(user=request.user, text=text)
 
-    users = User.objects.filter(Q(first_name__contains=text) | Q(
+    users = User.objects.exclude(id=request.user.id).filter(Q(first_name__contains=text) | Q(
         last_name__contains=text) | Q(username__contains=text))
     serializers = UserDetailSerializer(users, many=True)
 
@@ -55,7 +55,7 @@ def SearchUser(request):
 @api_view(['GET'])
 def RecentSearch(request):
     if request.user.id != None:
-        search_recent = SearchRecent.objects.filter(user=request.user)
+        search_recent = SearchRecent.objects.filter(user=request.user)[:5]
         return Response(response_success([i.text for i in search_recent]))
     else:
         return Response(response_success(""))

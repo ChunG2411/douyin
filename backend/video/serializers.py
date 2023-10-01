@@ -1,11 +1,14 @@
 from rest_framework import serializers
 
 from .models import Video, Music, LikeVideo, LikeComment, CommentVideo, Save
+from user.models import User
+from user.serializers import UserDetailSerializer
 
 class VideoSerializer(serializers.ModelSerializer):
     like_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
     save_count = serializers.SerializerMethodField()
+    user_infor = serializers.SerializerMethodField()
 
     class Meta:
         model = Video
@@ -24,6 +27,11 @@ class VideoSerializer(serializers.ModelSerializer):
 
     def get_save_count(self,  obj):
         return obj.save_count
+
+    def get_user_infor(self, obj):
+        user = User.objects.get(id=obj.user.id)
+        user_serializer = UserDetailSerializer(user)
+        return user_serializer.data
 
 
 class MusicSerializer(serializers.ModelSerializer):
