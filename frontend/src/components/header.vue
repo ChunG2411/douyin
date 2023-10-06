@@ -138,6 +138,10 @@ const redirectSearch = () => {
     router.push({ name: 'search', params: { text: search.context } })
 }
 
+const get_noti = () => {
+    console.log("notification")
+}
+
 </script>
 
 <template>
@@ -157,6 +161,7 @@ const redirectSearch = () => {
                     <p>{{ suggest }}</p>
                 </router-link>
             </div>
+            
             <div id="recent" v-else>
                 <router-link :to="{ name: 'search', params: { text: recent } }" v-for="recent in search.recent">
                     <p>{{ recent }}</p>
@@ -166,11 +171,23 @@ const redirectSearch = () => {
 
         <div class="action">
             <div class="profile" v-if="store.is_login">
+                <button @click="get_noti">Noti</button>
+
+                <router-link to="/chat">
+                    <button>Chat</button>
+                </router-link>
+
+                <router-link to="/creator">
+                    <button>Creator</button>
+                </router-link>
+
                 <router-link to="/profile/self">
                     <img class="profile_avatar_icon" :src="store.domain + store.my_profile.avatar">
                 </router-link>
+
                 <button @click="logout">logout</button>
             </div>
+
             <div class="login" v-else>
                 <button @click="show_login_popup = true">Login</button>
             </div>

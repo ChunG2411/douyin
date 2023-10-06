@@ -29,6 +29,7 @@ class NotiConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         data_json = json.loads(text_data)
+
         try:
             user = User.objects.get(username=data_json['user'])
         except: user = None
@@ -38,7 +39,7 @@ class NotiConsumer(WebsocketConsumer):
         try:
             type = data_json['type']
         except: type = None
-
+        
         try:
             noti = Noti.objects.filter(video=video, type=type).first()
             if noti:
@@ -58,20 +59,28 @@ class NotiConsumer(WebsocketConsumer):
                 noti = Noti.objects.create(user=video.user, video=video, type=type, context=context)
             
             serializer = NotiSerializer(noti)
+            data = {
+                'id':noti.id,
+                'type':noti.type,
+                'status':noti.status,
+                'context':noti.context,
+                'create_time':noti.create_time,
+                'user_id':noti.user_id,
+                'video_id'
+            }
             async_to_sync(self.channel_layer.group_send)(
                 self.group_name, {
                     'type': 'noti',
-                    'data': serializer.data
+                    'data': json.dumps(serializer.data)
                 }
             )
-        except:
+        except Exception as e:
             async_to_sync(self.channel_layer.group_send)(
                 self.group_name, {
                     'type': 'noti',
                     'data': None
                 }
             )
-
 
     def noti(self, e):
         self.send(text_data=json.dumps(e, default=str))
@@ -123,5 +132,4 @@ class ChatConsumer(WebsocketConsumer):
     def chat(self, e):
         self.send(text_data=json.dumps(e, default=str))
         
-
 

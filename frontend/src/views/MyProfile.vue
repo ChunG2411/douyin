@@ -155,11 +155,7 @@ const show_follower = () => {
 
 const upload_image = (e) => {
     modify_form.avatar = e.target.files[0]
-    const theReader = new FileReader()
-    theReader.onloadend = async () => {
-        preview_image_upload.value = await theReader.result
-    }
-    theReader.readAsDataURL(modify_form.avatar)
+    preview_image_upload.value = URL.createObjectURL(modify_form.avatar)
 }
 
 </script>
@@ -281,10 +277,5 @@ const upload_image = (e) => {
 <style>
 .popup div {
     background: white;
-}
-
-.profile-avatar {
-    width: 50px;
-    height: 50px;
 }
 </style>

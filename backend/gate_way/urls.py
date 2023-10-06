@@ -9,7 +9,7 @@ from user.views import (
     GetUserFollowed, GetUserFollower
 )
 from video.views import (
-    MusicView,
+    MusicView, MusicDetailView, get_my_music,
     get_videolist_of_music,
     get_video,
     LikeVideoView,
@@ -47,7 +47,9 @@ urlpatterns = [
     path('user/<str:username>/followed-list', GetUserFollowed, name="user-followed-list"),
     path('user/<str:username>/follower-list', GetUserFollower, name="user-follower-list"),
 
-    path('music/<str:pk>', MusicView.as_view(), name="music"),
+    path('music', MusicView.as_view(), name="music"),
+    path('music/self', get_my_music, name="music-self"),
+    path('music/<str:pk>', MusicDetailView.as_view(), name="music-detail"),
     path('music/<str:pk>/video', get_videolist_of_music, name="music-video-list"),
 
     path('video/<str:pk>', get_video, name="video"),

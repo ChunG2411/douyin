@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.1/howto/deployment/asgi/
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.urls import path
+from django.core.asgi import get_asgi_application
 
 from tool.consumers import NotiConsumer, ChatConsumer
 
@@ -19,5 +20,6 @@ ws_patterns = [
 ]
 
 application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
     "websocket": URLRouter(ws_patterns)
 })

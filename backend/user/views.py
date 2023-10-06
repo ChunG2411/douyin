@@ -29,7 +29,8 @@ class UserRegisterView(APIView):
         return Response(response_success(serializer.data), status=200)
 
     def post(self, request):
-        serializer = UserRegisterSerializers(context = {"request": request}, data=request.data)
+        serializer = UserRegisterSerializers(
+            context={"request": request}, data=request.data)
         if serializer.is_valid():
             serializer.save()
 
@@ -44,7 +45,7 @@ class UserDetailView(APIView):
             return user
         except:
             return None
-        
+
     def get(self, request, username):
         user = self.get_user(username)
         if user:
@@ -82,8 +83,8 @@ def ModifyUser(request, pk):
     except:
         return Response(response_error("User don't exist."))
     if request.user != user:
-            return Response(response_error("Check user login."), status=400)
-    
+        return Response(response_error("Check user login."), status=400)
+
     if username and username != "":
         try:
             User.objects.get(username=username)
@@ -102,7 +103,7 @@ def ModifyUser(request, pk):
                 user.email = email
             except:
                 return Response(response_error("Email invalidated."), status=400)
-    
+
     # check gender
     if gender:
         if gender == "Male":
@@ -113,18 +114,19 @@ def ModifyUser(request, pk):
             user.gender = "Other"
         else:
             return Response(response_error("Gender must in [M, F, O]."), status=400)
-    
+
     # check birth
     if birth:
         try:
             birth_split = birth.split('-')
-            birth = datetime.date(int(birth_split[0]), int(birth_split[1]), int(birth_split[2]))
+            birth = datetime.date(int(birth_split[0]), int(
+                birth_split[1]), int(birth_split[2]))
             user.birth = birth
         except Exception as e:
             return Response(response_error(str(e)), status=400)
     else:
         user.birth = ""
-        
+
     # check name
     if first_name:
         user.first_name = first_name
@@ -160,13 +162,13 @@ class LoginView(APIView):
 
         if not user.check_password(password):
             return Response(response_error("Password inccorect."), status=400)
-        
+
         refresh = TokenObtainPairSerializer.get_token(user)
         user.last_login = datetime.datetime.now()
         user.save()
         response = {
             'username': user.username,
-            'access' : str(refresh.access_token),
+            'access': str(refresh.access_token),
             'refresh': str(refresh)
         }
 
@@ -182,14 +184,14 @@ class LogoutView(APIView):
                 _, _ = BlacklistedToken.objects.get_or_create(token=token)
             return Response(response_success("All refresh tokens blacklisted."), status=200)
         refresh_token = self.request.data.get('refresh_token')
-        try: 
+        try:
             token = RefreshToken(token=refresh_token)
             token.blacklist()
         except:
             return Response(response_error("Token is blacklisted."), status=400)
         return Response(response_success("Logout successful."), status=200)
 
-    
+
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def user_online(request):
@@ -202,7 +204,7 @@ def user_online(request):
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def user_offline(request):    
+def user_offline(request):
     status = UserStatus.objects.get_or_create(user=request.user)
     status[0].status = False
     status[0].save()
@@ -216,24 +218,27 @@ class UserVideoView(APIView):
             return User.objects.get(username=username)
         except:
             return None
-        
+
     def get(self, request, username):
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
-        
-        videos = Video.objects.filter(user=user)
+
+        if request.user == user:
+            videos = Video.objects.filter(user=user)
+        else:
+            videos = Video.objects.filter(user=user, public=True)
         serializers = VideoSerializer(videos, many=True)
 
         return Response(response_success(serializers.data), status=200)
-    
+
     def post(self, request, username):
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
         if request.user != user:
             return Response(response_error("Check user login."), status=400)
-        
+
         request_copy = request.POST.copy()
         request_copy['video'] = request.FILES.copy()['video']
         request_copy['user'] = user.id
@@ -244,13 +249,15 @@ class UserVideoView(APIView):
             if request_copy['use_video_music'] == "1":
                 # convert mp4 to mp3
                 path_video = serializer.data['video'][1:]
-                path_music = path_video.replace('video/', 'music/').replace('.mp4', '.mp3')
+                path_music = path_video.replace(
+                    'video/', 'music/').replace('.mp4', '.mp3')
                 video_upload = VideoFileClip(path_video)
                 video_upload.audio.write_audiofile(path_music)
                 video_upload.close()
 
                 try:
-                    music = Music.objects.create(user=user, music=path_music.replace('media/', ''))
+                    music = Music.objects.create(
+                        user=user, music=path_music.replace('media/', ''))
                     video = Video.objects.get(id=serializer.data['id'])
                     video.music = music
                     video.save()
@@ -266,7 +273,7 @@ class UserVideoView(APIView):
                 music_id = request_copy['music']
                 if music_id == "":
                     return Response(response_error("Music is required."), status=400)
-                
+
                 try:
                     music = Music.objects.get(id=music_id)
                     video = Video.objects.get(id=serializer.data['id'])
@@ -289,22 +296,20 @@ class UserVideoView(APIView):
 @api_view(["DELETE"])
 @permission_classes([permissions.IsAuthenticated])
 def delete_video(request, username, pk):
-    user = User.objects.get(username=username)
-    if not user:
+    try:
+        user = User.objects.get(username=username)
+    except:
         return Response(response_error("User don't exist."), status=400)
     if request.user != user:
         return Response(response_error("Check user login."), status=400)
+    
     try:
         video = Video.objects.get(id=pk)
-        music = Music.objects.get(id=video.music.id)
         os.remove(get_absolute_media_path(video.video.url[1:]))
-        os.remove(get_absolute_media_path(music.music.url[1:]))
-        music.delete()
         video.delete()
-
     except Exception as e:
         return Response(response_error(str(e)), status=400)
-    
+
     return Response(response_success("Delete video succesful."), status=204)
 
 
@@ -315,19 +320,19 @@ class UserLikeVideoView(APIView):
             return User.objects.get(username=username)
         except:
             return None
-        
+
     def get(self, request, username):
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
         if request.user != user:
             return Response(response_error("Check user login."), status=400)
-        
+
         likes = LikeVideo.objects.filter(user=user)
         serializers = VideoSerializer([i.video for i in likes], many=True)
 
         return Response(response_success(serializers.data), status=200)
-    
+
 
 @permission_classes([permissions.IsAuthenticated])
 class UserSaveVideoView(APIView):
@@ -336,19 +341,19 @@ class UserSaveVideoView(APIView):
             return User.objects.get(username=username)
         except:
             return None
-        
+
     def get(self, request, username):
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
         if request.user != user:
             return Response(response_error("Check user login."), status=400)
-        
+
         saves = Save.objects.filter(user=user)
         serializers = VideoSerializer([i.video for i in saves], many=True)
 
         return Response(response_success(serializers.data), status=200)
-    
+
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
@@ -375,7 +380,7 @@ def FollowView(request, username):
 
     except Exception as e:
         return Response(response_error(str(e)), status=400)
-    
+
 
 @api_view(["GET"])
 def GetUserFollowed(request, username):
@@ -383,7 +388,7 @@ def GetUserFollowed(request, username):
         user = User.objects.get(username=username)
     except Exception as e:
         return Response(response_error(str(e)), status=400)
-    
+
     user_followed = UserFollowed.objects.get(user=user).followed
     serializers = UserDetailSerializer(user_followed, many=True)
 
@@ -396,7 +401,7 @@ def GetUserFollower(request, username):
         user = User.objects.get(username=username)
     except Exception as e:
         return Response(response_error(str(e)), status=400)
-    
+
     user_follower = UserFollower.objects.get(user=user).follower
     serializers = UserDetailSerializer(user_follower, many=True)
 

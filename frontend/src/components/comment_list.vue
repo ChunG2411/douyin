@@ -1,7 +1,8 @@
 <script setup>
 import { Store } from '../assets/store'
+import CommentItem from './comment_item.vue'
 
-import { ref, defineProps, watch } from 'vue'
+import { ref, defineProps, watch, reactive } from 'vue'
 import axios from 'axios'
 
 
@@ -13,17 +14,19 @@ watch(props, (oldvalue, currentvalue) => {
 })
 
 const store = Store()
-const my_user = localStorage.getItem('username')
-const comment_list = ref(null)
 
-const api_get_comment_list = (id) => {
+const comment_list = ref([])
+const comment_form = ref('')
+
+const api_get_comment_list = () => {
     let header = null
     if (store.is_login) {
         header = {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
     }
-    axios.get(`${store.domain}/api/video/${id}/comment-list`, header)
+
+    axios.get(`${store.domain}/api/video/${props.video_id}/comment-list`, header)
         .then(response => {
             comment_list.value = response.data.data
         })
@@ -36,49 +39,54 @@ const api_get_comment_list = (id) => {
             }
         })
 }
-api_get_comment_list(props.video_id)
+api_get_comment_list()
 
-const like_comment = () => {
-    console.log("like");
+const remove_parent = () => {
+    store.comment_tag.comment_id = ''
+    store.comment_tag.video_id = ''
+    store.comment_tag.full_name = ''
 }
 
-const comment_comment = () => {
-    console.log("comment");
+const comment_video = () => {
+    const header = {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }
+    const form = new FormData()
+    form.append('parent', store.comment_tag.comment_id)
+    form.append('context', comment_form.value)
+
+    axios.post(`${store.domain}/api/video/${props.video_id}/comment`, form, header)
+        .then(response => {
+            comment_list.value.push(response.data.data)
+            comment_form.value = null
+        })
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
 }
 
 </script>
 
 <template>
     <div class="comment_list">
-        <div v-for="comment in comment_list">
-            <div>
-                <router-link :to="{ name: 'guest_profile', params: { username: comment.user_infor.username } }"
-                    v-if="my_user != comment.user_infor.username">
-                    <img class="profile_avatar_icon" :src="store.domain + comment.user_infor.avatar">
-                </router-link>
-                <router-link to="/profile/self" v-else>
-                    <img class="profile_avatar_icon" :src="store.domain + comment.user_infor.avatar">
-                </router-link>
+        <div v-for="comment in comment_list" :key="comment.id">
+            <CommentItem :data="comment" />
+        </div>
 
-            </div>
-            <div>
-                <div>
-                    <router-link :to="{ name: 'guest_profile', params: { username: comment.user_infor.username } }"
-                        v-if="my_user != comment.user_infor.username">
-                        <p>{{ comment.user_infor.full_name }}</p>
-                    </router-link>
-                    <router-link to="/profile/self" v-else>
-                        <p>{{ comment.user_infor.full_name }}</p>
-                    </router-link>
-
-                    <p>{{ comment.context }}</p>
-                    <small>{{ comment.create_time }}</small>
-                </div>
-                <div>
-                    <button @click="like_comment">like</button>
-                    <button @click="comment_comment">comment</button>
-                </div>
-            </div>
+        <div>
+            <form @submit.prevent="comment_video" v-if="store.is_login">
+                <span v-if="store.comment_tag.video_id == props.video_id">
+                    <small>to @{{ store.comment_tag.full_name }}</small>
+                    <label @click="remove_parent">remove</label>
+                </span>
+                <input type="text" v-model="comment_form">
+                <button type="submit">comment</button>
+            </form>
         </div>
     </div>
 </template>

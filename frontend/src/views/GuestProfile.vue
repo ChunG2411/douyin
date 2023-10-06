@@ -178,7 +178,7 @@ const unfollow = () => {
             </div>
 
             <div>
-                <p id="created" @click="profile.active_tab = 'video'">created ({{ profile.infor.video_count }})</p>
+                <p id="created" @click="profile.active_tab = 'video'">created</p>
             </div>
         </div>
 

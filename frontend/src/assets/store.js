@@ -12,7 +12,13 @@ export const Store = defineStore('store', {
             avatar: null
         },
         is_login: ref((localStorage.getItem('token') === null) ? false : true),
-        msg_error: ref(null),
-        msg_success: ref(null)
+        msg_error: null,
+        msg_success: null,
+
+        comment_tag: {
+            video_id: '',
+            comment_id: '',
+            full_name: ''
+        }
     })
 })

@@ -2,8 +2,6 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework import mixins, generics
-from rest_framework.viewsets import ModelViewSet
 
 from django.db.models import Q
 from django.shortcuts import render
@@ -93,8 +91,7 @@ def SearchMessage(request, pk):
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def NotiView(request):
-    user = request.user
-    noti = Noti.objects.filter(user=user)
+    noti = Noti.objects.filter(user=request.user)
     serializer = NotiSerializer(noti, many=True)
     ser_copy = serializer.data
 
@@ -112,7 +109,7 @@ def DeleteNotiView(request, pk):
     try:
         noti = Noti.objects.get(id=pk, user=request.user)
         noti.delete()
-        return Response(response_success("Delete notification successful."), status=200)
+        return Response(response_success("Delete notification successful."), status=204)
     except Exception as e:
         return Response(response_error(str(e)), status=400)
 

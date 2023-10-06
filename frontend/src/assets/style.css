@@ -96,6 +96,37 @@ button:focus-visible {
   overflow: hidden;
 }
 
+.profile_avatar_search {
+  width: 100px;
+  height: 100px;
+}
+
+.profile_avatar_music{
+  width: 100px;
+  height: 100px;
+}
+
+.profile_avatar_music_list{
+  width: 70px;
+  height: 70px;
+}
+
+.video_search {
+  width: 500px;
+}
+
+.video_card{
+  width: 100px;
+}
+
+.video_manager{
+  width: 100px;
+}
+
+.video_view{
+  width: 300px;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

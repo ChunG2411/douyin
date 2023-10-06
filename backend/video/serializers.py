@@ -59,14 +59,26 @@ class VideoSerializer(serializers.ModelSerializer):
 
 
 class MusicSerializer(serializers.ModelSerializer):
+    user_infor = serializers.SerializerMethodField()
+    video_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Music
         fields = '__all__'
 
     def create(self, validated_data):
+
         music = Music(**validated_data)
         music.save()
         return music
+    
+    def get_user_infor(self, obj):
+        user_serializer = UserDetailSerializer(obj.user)
+        return user_serializer.data
+    
+    def get_video_count(self, obj):
+        video = Video.objects.filter(music=obj.id)
+        return video.count()
 
 
 class LikeVideoSerializer(serializers.ModelSerializer):
@@ -83,6 +95,9 @@ class LikeCommentSerializer(serializers.ModelSerializer):
 
 class CommentVideoSerializer(serializers.ModelSerializer):
     user_infor = serializers.SerializerMethodField()
+    like_count = serializers.SerializerMethodField()
+    liked = serializers.SerializerMethodField()
+    child_count = serializers.SerializerMethodField()
 
     class Meta:
         model = CommentVideo
@@ -90,10 +105,29 @@ class CommentVideoSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return super().create(validated_data)
-    
+
     def get_user_infor(self, obj):
         user_serializer = UserDetailSerializer(obj.user)
         return user_serializer.data
+
+    def get_liked(self, obj):
+        liked = LikeComment.objects.filter(comment=obj)
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+        if user and user.username in [like.user.username for like in liked]:
+            return True
+        else:
+            return False
+
+    def get_like_count(self, obj):
+        liked = LikeComment.objects.filter(comment=obj)
+        return liked.count()
+
+    def get_child_count(self, obj):
+        child = CommentVideo.objects.filter(video=obj.video, parent=obj.id)
+        return child.count()
 
 
 class SaveSerializer(serializers.ModelSerializer):

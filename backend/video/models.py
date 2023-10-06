@@ -6,9 +6,11 @@ from user.models import User
 import uuid
 
 # Create your models here.
+
 class Music(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_music")
+    name = models.CharField(max_length=255, default='')
     music = models.FileField(upload_to="music", validators=[FileExtensionValidator(allowed_extensions=['mp3'])])
     create_time = models.DateTimeField(auto_now_add=True)
 
@@ -16,6 +18,11 @@ class Music(models.Model):
         ordering = ['-create_time']
         db_table = 'tb_music'
         verbose_name = 'Music'
+
+    def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = "Music created by "+self.user.get_full_name
+        super(Music, self).save(*args, **kwargs)
     
     def __str__(self):
         return self.user.username
@@ -27,6 +34,7 @@ class Video(models.Model):
     descrip = models.TextField(null=True, blank=True)
     video = models.FileField(upload_to="video", validators=[FileExtensionValidator(allowed_extensions=['mp4'])])
     music = models.ForeignKey(Music, on_delete=models.SET_NULL, related_name="video_music", null=True, blank=True)
+    public = models.BooleanField(default=True)
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -87,6 +95,7 @@ class LikeComment(models.Model):
         ordering = ['-create_time']
         db_table = 'tb_comment_like'
         verbose_name = 'Comment Like'
+    
 
 
 class Save(models.Model):

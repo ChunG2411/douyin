@@ -182,7 +182,7 @@ const save_video = (id) => {
             <div class="search_board_user" v-if="active_bar == 'user'">
                 <div v-if="search_result.user.length > 0">
                     <div v-for="user in search_result.user">
-                        <img :src="store.domain + user.avatar">
+                        <img class="profile_avatar_search" :src="store.domain + user.avatar">
                         <p>{{ user.full_name }}</p>
                         <router-link :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
                     </div>
@@ -194,7 +194,7 @@ const save_video = (id) => {
 
             <div class="search_board_video" v-else-if="active_bar == 'video'">
                 <div v-if="search_result.video.length > 0">
-                    <div v-for="video in search_result.video">
+                    <div v-for="video in search_result.video" :key="video.id">
                         <div>
                             <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }" v-if="my_user!=video.user_infor.username">
                                 <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar">
@@ -207,7 +207,7 @@ const save_video = (id) => {
                         </div>
                         <div>
                             <p>{{ video.descrip }}</p>
-                            <video :src="video.video" controls />
+                            <video class="video_search" :src="video.video" controls />
                         </div>
                         <div>
                             <button @click="like_video(video.id)" v-if="video.liked">liked: {{ video.like_count }}</button>
