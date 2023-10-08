@@ -4,6 +4,8 @@ import CommentItemRecursive from './comment_item_Recursive.vue'
 
 import { ref, defineProps } from 'vue'
 import axios from 'axios'
+import { socket_noti } from '../function/socket.js'
+
 
 const props = defineProps({
     data: Object
@@ -48,6 +50,14 @@ const like_comment = () => {
                 if (response.data.data == "Liked.") {
                     props.data.liked = true
                     props.data.like_count += 1
+
+                    //socket noti: like comment
+                    socket_noti.send(JSON.stringify({
+                        "user": localStorage.getItem('username'),
+                        "video": props.data.video,
+                        "comment": props.data.id,
+                        "type": "3"
+                    }))
                 }
                 else {
                     props.data.liked = false

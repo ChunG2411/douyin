@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from .models import Noti, Chat, Message
 from user.models import User
+from user.serializers import UserDetailSerializer
 from social_network.config import response_error
 
 from datetime import datetime
@@ -9,6 +10,8 @@ from datetime import datetime
 
 class NotiSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()
+    video_link= serializers.SerializerMethodField()
+    user_send_infor = serializers.SerializerMethodField()
 
     class Meta:
         model = Noti
@@ -16,7 +19,24 @@ class NotiSerializer(serializers.ModelSerializer):
 
     def get_type(self, obj):
         return obj.get_type_display()
-
+    
+    def get_video_link(self, obj):
+        try:
+            link = obj.video.video.url
+        except:
+            link = None
+        return link
+    
+    def get_user_send_infor(self, obj):
+        try:
+            user = {
+                'avatar': obj.user_send.avatar.url,
+                'username': obj.user_send.username
+            }
+        except:
+            user = None
+        return user
+    
 
 class ChatSerializer(serializers.ModelSerializer):
     member = serializers.SerializerMethodField()

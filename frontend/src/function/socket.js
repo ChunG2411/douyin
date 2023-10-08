@@ -11,10 +11,6 @@ function connect_noti() {
             connect_noti()
         }, 2000)
     }
-    socket_noti.onmessage = function (e) {
-        var data = JSON.parse(e.data)
-        console.log(data)
-    }
 }
 
 export {

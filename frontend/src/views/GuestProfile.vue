@@ -1,11 +1,13 @@
 <script setup>
 import VideoListComponent from '../components/video_list.vue'
 import { Store } from '../assets/store.js'
+import { socket_noti } from '../function/socket.js'
 
 import { reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { vOnClickOutside } from '@vueuse/components'
+
 
 const store = Store()
 const route = useRoute()
@@ -122,6 +124,14 @@ const follow = () => {
     axios.get(`${store.domain}/api/user/${profile.infor.username}/follow`, header)
         .then(response => {
             profile.follow_status = true
+
+            //socket noti: like
+            socket_noti.send(JSON.stringify({
+                "user": localStorage.getItem('username'),
+                "video": '',
+                "user_receive": profile.infor.username,
+                "type": "5"
+            }))
         })
         .catch(error => {
             try {

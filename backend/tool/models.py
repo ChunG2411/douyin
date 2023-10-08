@@ -20,7 +20,8 @@ class SearchRecent(models.Model):
 class Noti(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_noti")
-    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="video_noti")
+    user_send = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_send", null=True)
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="video_noti", null=True)
     TYPE_CHOICES = (
         ('1', 'like_video'),
         ('2', 'comment_video'),
@@ -29,7 +30,8 @@ class Noti(models.Model):
         ('5', 'follow')
     )
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
-    context = models.TextField()
+    context = models.CharField(max_length=255)
+    user_interact = models.TextField(default='')
     status = models.BooleanField(default=False)
     create_time = models.DateTimeField(auto_now_add=True)
 

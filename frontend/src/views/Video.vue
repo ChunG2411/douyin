@@ -3,7 +3,7 @@ import { Store } from '../assets/store'
 import AuthenComponent from '../components/authen.vue'
 import CommentComponent from '../components/comment_list.vue'
 import ProfileComponent from '../components/profile_short.vue'
-// import { socket_noti, connect_noti } from '../function/socket.js'
+import { socket_noti } from '../function/socket.js'
 
 import { ref, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -13,26 +13,6 @@ import { vOnClickOutside } from '@vueuse/components'
 const store = Store()
 const route = useRoute()
 
-//socket
-const socket_noti = new WebSocket(`ws://127.0.0.1:8000/ws/noti/`)
-
-function connect_noti() {
-    socket_noti.onopen = function () {
-        console.log("Websocket noti is connected")
-    }
-    socket_noti.onclose = function () {
-        console.log("Websocket noti is disconnected")
-        setInterval(function () {
-            console.log("Websocket noti reconnecting...")
-            connect_noti()
-        }, 2000)
-    }
-    socket_noti.onmessage = function (e) {
-        var data = JSON.parse(e.data)
-        console.log(data)
-    }
-}
-connect_noti()
 
 watch(() => route.params.id, (currentvalue, oldvalue) => {
     api_get_video(currentvalue)

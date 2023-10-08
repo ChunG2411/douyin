@@ -5,8 +5,7 @@ import json
 
 from .models import Noti, Chat
 from user.models import User
-from video.models import Video
-from .serializers import NotiSerializer
+from video.models import Video, CommentVideo
 
 
 class NotiConsumer(WebsocketConsumer):
@@ -20,7 +19,7 @@ class NotiConsumer(WebsocketConsumer):
             self.group_name,
             self.channel_name
         )
-        
+
     def disconnect(self, code):
         async_to_sync(self.channel_layer.group_discard)(
             self.group_name,
@@ -32,46 +31,76 @@ class NotiConsumer(WebsocketConsumer):
 
         try:
             user = User.objects.get(username=data_json['user'])
-        except: user = None
+        except:
+            user = None
         try:
             video = Video.objects.get(id=data_json['video'])
-        except: video = None
+        except:
+            video = None
         try:
             type = data_json['type']
-        except: type = None
-        
+        except:
+            type = None
+
         try:
-            noti = Noti.objects.filter(video=video, type=type).first()
+            if type == "1" or type == "2":
+                user_receive = video.user
+            elif type == "3":
+                comment = CommentVideo.objects.get(id=data_json['comment'])
+                user_receive = comment.user
+            elif type == "4":
+                comment = CommentVideo.objects.get(id=data_json['comment'])
+                user_receive = comment.user
+            elif type == "5":
+                user_receive = User.objects.get(username=data_json['user_receive'])
+            
+            noti = Noti.objects.filter(user=user_receive, video=video, type=type).first()
             if noti:
                 if noti.status:
-                    context = []
-                    context.append(user.username)
-                    noti = Noti.objects.create(user=video.user, video=video, type=type, context=context)
+                    user_interact = user.username
+                    context = user.get_full_name
+
+                    noti = Noti.objects.create(user=user_receive,
+                                               video=video,
+                                               type=type,
+                                               user_interact=user_interact,
+                                               context=context,
+                                               user_send=user)
                 else:
-                    if user.username not in noti.context:
-                        noti.context.append(user.username)
+                    user_interact_list = noti.user_interact.split(',')
+                    if user.username not in user_interact_list:
+                        noti.user_interact += ',' + user.username
+                        noti.context = user.get_full_name
                         noti.save()
                     else:
                         pass
             else:
-                context = []
-                context.append(user.username)
-                noti = Noti.objects.create(user=video.user, video=video, type=type, context=context)
-            
-            serializer = NotiSerializer(noti)
+                user_interact = user.username
+                context = user.get_full_name
+
+                noti = Noti.objects.create(user=user_receive,
+                                           video=video,
+                                           type=type,
+                                           user_interact=user_interact,
+                                           context=context,
+                                           user_send=user)
+
             data = {
-                'id':noti.id,
-                'type':noti.type,
-                'status':noti.status,
-                'context':noti.context,
-                'create_time':noti.create_time,
-                'user_id':noti.user_id,
-                'video_id'
+                'id': str(noti.id),
+                'type': noti.type,
+                'status': noti.status,
+                'context': noti.context,
+                'user_interact': noti.user_interact,
+                'create_time': str(noti.create_time.date()) + ' ' + str(noti.create_time.time()),
+                'user': str(noti.user.id),
+                'video': str(noti.video.video.url) if noti.video else '',
+                'user_send': str(noti.user_send.username),
+                'avatar': str(noti.user_send.avatar.url)
             }
             async_to_sync(self.channel_layer.group_send)(
                 self.group_name, {
                     'type': 'noti',
-                    'data': json.dumps(serializer.data)
+                    'data': data
                 }
             )
         except Exception as e:
@@ -84,20 +113,20 @@ class NotiConsumer(WebsocketConsumer):
 
     def noti(self, e):
         self.send(text_data=json.dumps(e, default=str))
-    
+
 
 class ChatConsumer(WebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.group_name = 'chat'
-    
+
     def connect(self):
         self.accept()
         async_to_sync(self.channel_layer.group_add)(
             self.group_name,
             self.channel_name
         )
-        
+
     def disconnect(self, code):
         async_to_sync(self.channel_layer.group_discard)(
             self.group_name,
@@ -128,8 +157,6 @@ class ChatConsumer(WebsocketConsumer):
                     'data': None
                 }
             )
-    
+
     def chat(self, e):
         self.send(text_data=json.dumps(e, default=str))
-        
-

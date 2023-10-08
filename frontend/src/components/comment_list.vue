@@ -4,6 +4,7 @@ import CommentItem from './comment_item.vue'
 
 import { ref, defineProps, watch, reactive } from 'vue'
 import axios from 'axios'
+import { socket_noti } from '../function/socket.js'
 
 
 const props = defineProps({
@@ -59,6 +60,24 @@ const comment_video = () => {
         .then(response => {
             comment_list.value.push(response.data.data)
             comment_form.value = null
+
+            //socket noti: comment
+            if (store.comment_tag.comment_id) {
+                socket_noti.send(JSON.stringify({
+                    "user": localStorage.getItem('username'),
+                    "video": props.video_id,
+                    "comment": store.comment_tag.comment_id,
+                    "type": "4"
+                }))
+            }
+            else {
+                socket_noti.send(JSON.stringify({
+                    "user": localStorage.getItem('username'),
+                    "video": props.video_id,
+                    "type": "2"
+                }))
+            }
+
         })
         .catch(error => {
             try {

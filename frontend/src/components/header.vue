@@ -1,12 +1,14 @@
 <script setup>
 import AuthenComponent from './authen.vue'
+import Notification from './notification.vue'
 import { Store } from '../assets/store'
+import { socket_noti, connect_noti } from '../function/socket.js'
 
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-
 import axios from 'axios'
 import { vOnClickOutside } from '@vueuse/components'
+import jwt_decode from "jwt-decode"
 
 
 const store = Store()
@@ -20,7 +22,29 @@ const search = reactive({
 
 const show_search_popup = ref(false)
 const show_login_popup = ref(false)
+const show_noti_popup = ref(false)
+const have_new_noti = ref(false)
 
+const socket_noti_data = ref(null)
+
+//socket
+connect_noti()
+
+socket_noti.onmessage = function (e) {
+    if (store.is_login) {
+        var data = JSON.parse(e.data)
+        const decoded = jwt_decode(localStorage.getItem('token'))
+        console.log(data)
+
+        // noti
+        if (data.type == "noti" && data.data) {
+            socket_noti_data.value = data.data
+            if (decoded.user_id == socket_noti_data.value.user) {
+                have_new_noti.value = true
+            }
+        }
+    }
+}
 
 const api_get_my_user = () => {
     const header = {
@@ -132,14 +156,12 @@ const logout = () => {
 
 const close_popup = [() => {
     show_login_popup.value = false
+    show_noti_popup.value = false
+    have_new_noti.value = false
 }]
 
 const redirectSearch = () => {
     router.push({ name: 'search', params: { text: search.context } })
-}
-
-const get_noti = () => {
-    console.log("notification")
 }
 
 </script>
@@ -161,7 +183,7 @@ const get_noti = () => {
                     <p>{{ suggest }}</p>
                 </router-link>
             </div>
-            
+
             <div id="recent" v-else>
                 <router-link :to="{ name: 'search', params: { text: recent } }" v-for="recent in search.recent">
                     <p>{{ recent }}</p>
@@ -171,7 +193,7 @@ const get_noti = () => {
 
         <div class="action">
             <div class="profile" v-if="store.is_login">
-                <button @click="get_noti">Noti</button>
+                <button @click="show_noti_popup = true">Noti</button>
 
                 <router-link to="/chat">
                     <button>Chat</button>
@@ -193,8 +215,26 @@ const get_noti = () => {
             </div>
         </div>
 
-        <div class="popup" v-if="show_login_popup">
-            <AuthenComponent v-on-click-outside="close_popup" />
+        <div class="popup" v-if="show_login_popup || show_noti_popup || have_new_noti">
+            <div v-if="show_login_popup">
+                <AuthenComponent v-on-click-outside="close_popup" />
+            </div>
+            <div v-if="show_noti_popup">
+                <Notification v-on-click-outside="close_popup" />
+            </div>
+            <div v-if="have_new_noti" v-on-click-outside="close_popup">
+                <p v-if="socket_noti_data.user_interact.split(',').length - 1 > 0">
+                    {{ socket_noti_data.context }} and {{ socket_noti_data.user_interact.split(",").length - 1 }}
+                    other people
+                </p>
+                <p v-else>{{ socket_noti_data.context }}</p>
+
+                <p v-if="socket_noti_data.type == '1'">liked your video</p>
+                <p v-else-if="socket_noti_data.type == '2'">commented your video</p>
+                <p v-else-if="socket_noti_data.type == '3'">liked your comment</p>
+                <p v-else-if="socket_noti_data.type == '4'">commented your comment</p>
+                <p v-else-if="socket_noti_data.type == '5'">followed you</p>
+            </div>
         </div>
 
     </div>
