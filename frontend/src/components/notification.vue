@@ -27,11 +27,35 @@ const api_get_notification = () => {
 }
 api_get_notification()
 
+
+const delete_noti = (id) => {
+    const header = {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }
+    axios.delete(`${store.domain}/api/notification/${id}`, header)
+        .then(response => {
+            for (let i = 0; i < noti_list.value.length; i++) {
+                if (noti_list.value[i].id == id) {
+                    noti_list.value.splice(i, 1)
+                }
+            }
+            store.msg_success = "Delete successful."
+        })
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
+}
+
 </script>
 
 <template>
     <div class="notification">
-        <div v-for="noti in noti_list" :key="noti.key" v-if="noti_list.length > 0">
+        <div v-for="noti in noti_list" :key="noti.id" v-if="noti_list.length > 0">
             <div>
                 <p v-if="noti.user_interact.split(',').length - 1 > 0">
                     {{ noti.context }} and {{ noti.user_interact.split(',').length - 1 }} other people
@@ -51,7 +75,10 @@ api_get_notification()
                 <router-link :to="{ name: 'guest_profile', params: { username: noti.user_send_infor.username } }" v-else>
                     <img :src="store.domain + noti.user_send_infor.avatar" />
                 </router-link>
-                
+
+            </div>
+            <div>
+                <button @click="delete_noti(noti.id)">Delete</button>
             </div>
         </div>
 
@@ -60,3 +87,10 @@ api_get_notification()
         </div>
     </div>
 </template>
+
+<style>
+.notification{
+    height: 500px;
+    overflow: scroll;
+}
+</style>

@@ -127,6 +127,10 @@ button:focus-visible {
   width: 300px;
 }
 
+.avatar_chat{
+  width: 100px;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

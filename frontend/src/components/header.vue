@@ -34,7 +34,6 @@ socket_noti.onmessage = function (e) {
     if (store.is_login) {
         var data = JSON.parse(e.data)
         const decoded = jwt_decode(localStorage.getItem('token'))
-        console.log(data)
 
         // noti
         if (data.type == "noti" && data.data) {

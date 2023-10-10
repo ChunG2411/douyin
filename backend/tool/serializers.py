@@ -121,15 +121,10 @@ class MessageSerializer(serializers.ModelSerializer):
         message.reader.add(sender_user)
 
         if message.context:
-            chat.last_message = {
-                "sender" : sender_user.last_name,
-                "text" : message.context    
-            }
+            chat.last_message = sender_user.last_name + ": " + message.context
         elif message.media:
-            chat.last_message = {
-                "sender" : sender_user.last_name,
-                "text" : "Sended media file."
-            }
+            chat.last_message = sender_user.last_name + " sended media file."
+            
         chat.last_action = datetime.now()
         chat.save()
 

@@ -70,7 +70,7 @@ def SuggestSearch(request):
 @permission_classes([permissions.IsAuthenticated])
 def SearchChat(request):
     text = request.query_params['text']
-    chats = Chat.objects.filter(user=request.user, name__contains=text)
+    chats = Chat.objects.filter(name__contains=text)
     serializers = ChatSerializer(chats, many=True)
     return Response(response_success(serializers.data), status=200)
 
@@ -120,14 +120,14 @@ class ChatView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        chats = self.queryset.filter(user=request.user)
+        chats = self.queryset.filter(member__id=request.user.id)
         return Response(response_success(self.serializer_class(chats, many=True).data), status=200)
 
     def delete(self, request):
         chat_id = request.GET.get('id')
         try:
             self.queryset.get(id=chat_id, user=request.user).delete()
-            return Response(response_success("Delete successful."), status=200)
+            return Response(response_success("Delete successful."), status=204)
         except Exception as e:
             return Response(response_error(str(e)), status=400)
 
@@ -208,7 +208,7 @@ class MessageView(APIView):
         if not page:
             page = "1"
         try:
-            chat = Chat.objects.get(id=pk, user=request.user)
+            chat = Chat.objects.get(id=pk, member__id=request.user.id)
             message = self.queryset.filter(receiver=chat)[
                 ((int(page)-1)*20):(int(page)*20)]
             for i in message:

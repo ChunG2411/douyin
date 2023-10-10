@@ -71,7 +71,7 @@ urlpatterns = [
     path('notification', NotiView, name="noti"),
     path("notification/<str:pk>", DeleteNotiView, name="noti-delete"),
 
-    path("chat/", ChatView.as_view(), name="chat"),
+    path("chat", ChatView.as_view(), name="chat"),
     path("chat/<str:pk>/detail", MessageView.as_view(), name="message"),
     path("chat/<str:pk>/add", add_member_to_chat, name="chat-add"),
     path("chat/<str:pk>/remove", remove_member_to_chat, name="chat-remove"),

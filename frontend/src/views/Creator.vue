@@ -115,7 +115,7 @@ const delete_video = (id) => {
         .then(response => {
             for (let i = 0; i < my_video_list.value.length; i++) {
                 if (my_video_list.value[i].id == id) {
-                    my_video_list.value.pop(my_video_list.value[i])
+                    my_video_list.value.splice(i, 1)
                 }
             }
         })
@@ -202,7 +202,7 @@ const delete_music = (id) => {
         .then(response => {
             for (let i = 0; i < my_music_list.value.length; i++) {
                 if (my_music_list.value[i].id == id) {
-                    my_music_list.value.pop(my_music_list.value[i])
+                    my_music_list.value.splice(i, 1)
                 }
             }
         })
@@ -265,7 +265,7 @@ const active_tab = (type) => {
                         <label @click="get_music_list">music</label>
                     </div>
                     <input type="checkbox" v-model="upload_video_form.public">
-                    
+
                     <button type="submit">Submit</button>
                 </form>
 
