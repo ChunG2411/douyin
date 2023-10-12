@@ -57,7 +57,7 @@ def RecentSearch(request):
         return Response(response_success([i.text for i in search_recent]))
     else:
         return Response(response_success(""))
-    
+
 
 @api_view(['GET'])
 def SuggestSearch(request):
@@ -166,6 +166,17 @@ class ChatView(APIView):
             return Response(response_error(str(e)), status=400)
 
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_member_of_chat(request, pk):
+    try:
+        chat = Chat.objects.get(id=pk)
+        serializer = UserDetailSerializer(chat.member, many=True)
+        return Response(response_success(serializer.data), status=201)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+
+
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def add_member_to_chat(request, pk):
@@ -174,7 +185,7 @@ def add_member_to_chat(request, pk):
     try:
         chat = Chat.objects.get(id=pk)
         if chat.type == "1":
-            return Response(response_error("Couldn't add member to this chat."))
+            return Response(response_error("Couldn't add member to this chat."), status=400)
         for i in member_list:
             user = User.objects.get(username=i)
             chat.member.add(user)
@@ -190,9 +201,14 @@ def remove_member_to_chat(request, pk):
     try:
         chat = Chat.objects.get(id=pk)
         if chat.type == "1":
-            return Response(response_error("Couldn't remove member to this chat."))
+            return Response(response_error("Couldn't remove member to this chat."), status=400)
         user = User.objects.get(username=member)
-        chat.member.remove(user)
+
+        if user.username == chat.user.username:
+            chat.delete()
+        else:
+            chat.member.remove(user)
+
         return Response(response_success("Remove member succesful."), status=200)
     except Exception as e:
         return Response(response_error(str(e)), status=400)

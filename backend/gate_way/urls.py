@@ -22,9 +22,9 @@ from video.views import (
 from tool.views import (
     SearchVideo, SearchUser, SearchChat, SearchMessage, RecentSearch, SuggestSearch,
     NotiView, DeleteNotiView,
-    ChatView,
+    ChatView, 
     MessageView,
-    add_member_to_chat, remove_member_to_chat,
+    get_member_of_chat, add_member_to_chat, remove_member_to_chat,
     testview
 )
 
@@ -73,6 +73,7 @@ urlpatterns = [
 
     path("chat", ChatView.as_view(), name="chat"),
     path("chat/<str:pk>/detail", MessageView.as_view(), name="message"),
+    path("chat/<str:pk>/member", get_member_of_chat, name="chat-member"),
     path("chat/<str:pk>/add", add_member_to_chat, name="chat-add"),
     path("chat/<str:pk>/remove", remove_member_to_chat, name="chat-remove"),
 

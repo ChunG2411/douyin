@@ -3,7 +3,7 @@ from asgiref.sync import async_to_sync
 
 import json
 
-from .models import Noti, Chat
+from .models import Noti, Chat, Message
 from user.models import User
 from video.models import Video, CommentVideo
 
@@ -136,21 +136,29 @@ class ChatConsumer(WebsocketConsumer):
     def receive(self, text_data=None, bytes_data=None):
         data_json = json.loads(text_data)
         try:
-            sender = User.objects.get(id=data_json['sender'])
+            sender = User.objects.get(username=data_json['sender'])
             receiver = Chat.objects.get(id=data_json['receiver'])
             member = receiver.member.values_list('username', flat=True)
+
+            message = Message.objects.create(
+                                            sender=sender,
+                                            receiver=receiver,
+                                            context=data_json['context'],
+                                            media=data_json['media'])
 
             async_to_sync(self.channel_layer.group_send)(
                 self.group_name, {
                     'type': 'chat',
                     'data': {
                         'sender': sender.username,
-                        'receiver': receiver.id,
-                        'member': list(member)
+                        'receiver': str(receiver.id),
+                        'member': list(member),
+                        'context': message.context,
+                        'media': message.media.url if message.media else ''
                     }
                 }
             )
-        except:
+        except Exception as e:
             async_to_sync(self.channel_layer.group_send)(
                 self.group_name, {
                     'type': 'chat',

@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from "vue"
-import axios from 'axios'
 
 
 export const Store = defineStore('store', {
@@ -11,7 +10,7 @@ export const Store = defineStore('store', {
             username: localStorage.getItem('username'),
             avatar: null
         },
-        is_login: ref((localStorage.getItem('token') === null) ? false : true),
+        is_login: (localStorage.getItem('token') === null) ? false : true,
         msg_error: null,
         msg_success: null,
 
@@ -19,6 +18,8 @@ export const Store = defineStore('store', {
             video_id: '',
             comment_id: '',
             full_name: ''
-        }
+        },
+
+        chat_socket: {}
     })
 })
