@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../views/Home.vue'
+import Home_followed from '../views/Home_followed.vue'
 import GuestProfile from '../views/GuestProfile.vue'
 import MyProfile from '../views/MyProfile.vue'
 import Search from '../views/Search.vue'
@@ -15,6 +16,11 @@ const routes = [
         name: "home",
         path: "/",
         component: Home
+    },
+    {
+        name: "home_followed",
+        path: "/followed",
+        component: Home_followed
     },
     {
         name: "guest_profile",

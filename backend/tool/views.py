@@ -4,7 +4,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from django.db.models import Q
-from django.shortcuts import render
 
 from social_network.config import response_error, response_success
 from video.models import Video
@@ -254,7 +253,3 @@ class MessageView(APIView):
             return Response(response_success(serializer.data), status=201)
         else:
             return Response(response_error(serializer.errors), status=400)
-
-
-def testview(request):
-    return render(request, "index.html")

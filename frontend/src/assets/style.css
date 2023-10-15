@@ -135,6 +135,10 @@ button:focus-visible {
   width: 200px;
 }
 
+.image_noti{
+  width: 50px;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

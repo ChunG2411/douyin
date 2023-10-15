@@ -2,7 +2,7 @@
 import AuthenComponent from './authen.vue'
 import Notification from './notification.vue'
 import { Store } from '../assets/store'
-import { socket_noti, connect_noti, connect_chat, socket_chat } from '../function/socket.js'
+import { socket_noti, connect_noti, connect_chat, socket_chat, connect_message } from '../function/socket.js'
 
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
@@ -23,21 +23,27 @@ const search = reactive({
 const show_search_popup = ref(false)
 const show_login_popup = ref(false)
 const show_noti_popup = ref(false)
+
 const have_new_noti = ref(false)
-const have_new_chat = ref(false)
+const have_new_chat = reactive({
+    status: false,
+    text: '',
+    avatar: '',
+    name: ''
+})
 
 const socket_noti_data = ref(null)
 
 //socket
 connect_noti()
 connect_chat()
+connect_message()
 
 socket_noti.onmessage = function (e) {
     if (store.is_login) {
         var data = JSON.parse(e.data)
         const decoded = jwt_decode(localStorage.getItem('token'))
 
-        // noti
         if (data.type == "noti" && data.data) {
             socket_noti_data.value = data.data
             if (decoded.user_id == socket_noti_data.value.user) {
@@ -51,13 +57,12 @@ socket_chat.onmessage = function (e) {
     if (store.is_login) {
         var data = JSON.parse(e.data)
 
-        // chat
         if (data.type == "chat" && data.data) {
             if (data.data.member.includes(localStorage.getItem('username')) && data.data.sender != localStorage.getItem('username')) {
-                have_new_chat.value = true
-                store.chat_socket = { ...data.data };
-
-                console.log(store.chat_socket);
+                have_new_chat.status = true
+                have_new_chat.text = data.data.text
+                have_new_chat.avatar = data.data.receiver.avatar
+                have_new_chat.name = data.data.receiver.name
             }
         }
     }
@@ -177,7 +182,7 @@ const close_popup = [() => {
     show_login_popup.value = false
     show_noti_popup.value = false
     have_new_noti.value = false
-    have_new_chat.value = false
+    have_new_chat.status = false
 }]
 
 const redirectSearch = () => {
@@ -188,7 +193,7 @@ const redirectSearch = () => {
 
 <template>
     <div class="header">
-        <router-link to="/">home</router-link>
+        <router-link :to="{ name: 'home', params: { username: '' } }">home</router-link>
 
         <div class="search">
             <input type="text" id="search-bar" placeholder="What do you want to find?" v-model="search.context"
@@ -235,7 +240,7 @@ const redirectSearch = () => {
             </div>
         </div>
 
-        <div class="popup" v-if="show_login_popup || show_noti_popup || have_new_noti || have_new_chat">
+        <div class="popup" v-if="show_login_popup || show_noti_popup || have_new_noti || have_new_chat.status">
             <div v-if="show_login_popup">
                 <AuthenComponent v-on-click-outside="close_popup" />
             </div>
@@ -255,8 +260,10 @@ const redirectSearch = () => {
                 <p v-else-if="socket_noti_data.type == '4'">commented your comment</p>
                 <p v-else-if="socket_noti_data.type == '5'">followed you</p>
             </div>
-            <div v-if="have_new_chat" v-on-click-outside="close_popup">
-                <p>new message</p>
+            <div v-if="have_new_chat.status" v-on-click-outside="close_popup">
+                <img class="image_noti" :src="store.domain + have_new_chat.avatar">
+                <b>{{ have_new_chat.name }}</b>
+                <p>{{ have_new_chat.text }}</p>
             </div>
         </div>
 

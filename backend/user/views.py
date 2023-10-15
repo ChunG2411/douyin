@@ -251,8 +251,8 @@ class UserVideoView(APIView):
                 path_video = serializer.data['video'][1:]
                 path_music = path_video.replace(
                     'video/', 'music/').replace('.mp4', '.mp3')
-                video_upload = VideoFileClip(path_video)
-                video_upload.audio.write_audiofile(path_music)
+                video_upload = VideoFileClip(get_absolute_media_path(path_video))
+                video_upload.audio.write_audiofile(get_absolute_media_path(path_music))
                 video_upload.close()
 
                 try:

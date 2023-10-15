@@ -5,8 +5,7 @@ import CommentComponent from '../components/comment_list.vue'
 import ProfileComponent from '../components/profile_short.vue'
 import { socket_noti } from '../function/socket.js'
 
-import { ref, reactive, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, reactive } from 'vue'
 import axios from 'axios'
 import { vOnClickOutside } from '@vueuse/components'
 
@@ -46,71 +45,69 @@ const get_list_video = () => {
 }
 get_list_video()
 
-const like_video = () => {
-    if (store.is_login) {
-        const header = {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }
-        axios.get(`${store.domain}/api/video/${route.params.id}/like`, header)
-            .then(response => {
-                if (response.data.data == "Liked.") {
-                    video.value.liked = true
-                    video.value.like_count += 1
+const like_video = (id) => {
+    const header = {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }
+    axios.get(`${store.domain}/api/video/${id}/like`, header)
+        .then(response => {
+            for (let i = 0; i < list_video.value.length; i++) {
+                if (list_video.value[i].id == id) {
+                    if (response.data.data == "Liked.") {
+                        list_video.value[i].liked = true
+                        list_video.value[i].like_count += 1
 
-                    //socket noti: like
-                    socket_noti.send(JSON.stringify({
-                        "user": localStorage.getItem('username'),
-                        "video": video.value.id,
-                        "type": "1"
-                    }))
+                        //socket noti: like
+                        socket_noti.send(JSON.stringify({
+                            "user": localStorage.getItem('username'),
+                            "video": list_video.value[i].id,
+                            "type": "1"
+                        }))
+                    }
+                    else {
+                        list_video.value[i].liked = false
+                        list_video.value[i].like_count -= 1
+                    }
                 }
-                else {
-                    video.value.liked = false
-                    video.value.like_count -= 1
-                }
-            })
-            .catch(error => {
-                try {
-                    store.msg_error = error.response.data.msg
-                }
-                catch {
-                    store.msg_error = error
-                }
-            })
-    }
-    else {
-        show_login_popup.value = true
-    }
+            }
+        })
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
 }
 
-const save_video = () => {
-    if (store.is_login) {
-        const header = {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }
-        axios.get(`${store.domain}/api/video/${route.params.id}/save`, header)
-            .then(response => {
-                if (response.data.data == "Saved.") {
-                    video.value.saved = true
-                    video.value.save_count += 1
-                }
-                else {
-                    video.value.saved = false
-                    video.value.save_count -= 1
-                }
-            })
-            .catch(error => {
-                try {
-                    store.msg_error = error.response.data.msg
-                }
-                catch {
-                    store.msg_error = error
-                }
-            })
+const save_video = (id) => {
+    const header = {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     }
-    else {
-        show_login_popup.value = true
-    }
+    axios.get(`${store.domain}/api/video/${id}/save`, header)
+        .then(response => {
+            for (let i = 0; i < list_video.value.length; i++) {
+                if (list_video.value[i].id == id) {
+                    if (response.data.data == "Saved.") {
+                        list_video.value[i].saved = true
+                        list_video.value[i].save_count += 1
+                    }
+                    else {
+                        list_video.value[i].saved = false
+                        list_video.value[i].save_count -= 1
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
 }
 
 
@@ -125,28 +122,31 @@ const handle_show_component = (target) => {
     }
 }
 
+const loadMore = () => {
+    console.log("end");
+}
 
 </script>
 
 <template>
     <div class="home">
-        <div v-for="video in list_video">
+        <div v-for="video in list_video" :key="video.id">
             <div>
                 <div>
-                    <video class="video_view" :src="store.domain + video.video" loop controls />
+                    <video class="video_view" :src="video.video" loop controls />
                 </div>
                 <div>
                     <div>
                         <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar"
                             @click="handle_show_component('profile')">
 
-                        <button @click="like_video" v-if="video.liked">liked: {{ video.like_count }}</button>
-                        <button @click="like_video" v-else>like: {{ video.like_count }}</button>
+                        <button @click="like_video(video.id)" v-if="video.liked">liked: {{ video.like_count }}</button>
+                        <button @click="like_video(video.id)" v-else>like: {{ video.like_count }}</button>
 
                         <button @click="handle_show_component('comment')">{{ video.comment_count }}</button>
 
-                        <button @click="save_video" v-if="video.saved">saved: {{ video.save_count }}</button>
-                        <button @click="save_video" v-else>save: {{ video.save_count }}</button>
+                        <button @click="save_video(video.id)" v-if="video.saved">saved: {{ video.save_count }}</button>
+                        <button @click="save_video(video.id)" v-else>save: {{ video.save_count }}</button>
                     </div>
                     <div>
                         <router-link :to="{ name: 'music', params: { id: video.music } }" v-if="video.music">

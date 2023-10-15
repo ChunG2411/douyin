@@ -1,8 +1,8 @@
 <script setup>
 import { Store } from '../assets/store'
-import { socket_chat } from '../function/socket.js'
+import { socket_message, socket_chat } from '../function/socket.js'
 
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive } from 'vue'
 import axios from 'axios'
 import jwt_decode from "jwt-decode"
 
@@ -13,6 +13,7 @@ const my_user = localStorage.getItem('username')
 
 const chat_list = ref([])
 const msg_list = ref([])
+const msg_page = ref('1')
 const cur_chat = ref(null)
 const member_list = ref([])
 
@@ -45,12 +46,31 @@ const follower = ref([])
 const add_member_list = ref([])
 
 
-watch(store.chat_socket?.context, (currentvalue) => {
-    if (cur_chat.value.id == currentvalue.receiver) {
-        api_get_chat_detail(cur_chat.value.id)
-    }
-})
+// socket message
+const new_message = ref(null)
 
+socket_message.onmessage = function (e) {
+    if (store.is_login) {
+        var data = JSON.parse(e.data)
+
+        if (data.type == "message" && data.data) {
+            if (cur_chat.value && cur_chat.value.id == data.data.receiver) {
+                if (data.data.sender != decoded.user_id) {
+                    new_message.value = data.data
+                    msg_list.value.push(new_message.value)
+                }
+            }
+            else {
+                for (let i = 0; i < chat_list.value.length; i++) {
+                    if (chat_list.value[i].id == data.data.receiver) {
+                        chat_list.value[i].last_message = "new message"
+                    }
+                }
+            }
+        }
+    }
+}
+//
 
 const api_get_chat = () => {
     const header = {
@@ -63,10 +83,10 @@ const api_get_chat = () => {
         .catch(error => {
             console.log(error)
             try {
-                store.msg_error.value = error.response.data.msg
+                store.msg_error = error.response.data.msg
             }
             catch {
-                store.msg_error.value = error
+                store.msg_error = error
             }
         })
 }
@@ -76,16 +96,18 @@ const api_get_chat_detail = (id) => {
     const header = {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     }
-    axios.get(`${store.domain}/api/chat/${id}/detail`, header)
+    axios.get(`${store.domain}/api/chat/${id}/detail?page=${msg_page.value}`, header)
         .then(response => {
-            msg_list.value = response.data.data
+            for (let i = 0; i < response.data.data.length; i++) {
+                msg_list.value.unshift(response.data.data[i])
+            }
         })
         .catch(error => {
             try {
-                store.msg_error.value = error.response.data.msg
+                store.msg_error = error.response.data.msg
             }
             catch {
-                store.msg_error.value = error
+                store.msg_error = error
             }
         })
 }
@@ -112,24 +134,36 @@ const submit_form = (id) => {
         .then(response => {
             msg_list.value.push(response.data.data)
 
-            //socket noti: chat
-            socket_chat.send(JSON.stringify({
+            //socket: message
+            socket_message.send(JSON.stringify({
                 "sender": localStorage.getItem('username'),
                 "receiver": id,
                 "context": form_msg.text,
                 "media": form_msg.media
             }))
+            // socket: chat
+            socket_chat.send(JSON.stringify({
+                "sender": localStorage.getItem('username'),
+                "receiver": id
+            }))
 
             form_msg.text = ''
+            form_msg.media = ''
+            preview_image_upload.value = null
         })
         .catch(error => {
             try {
-                store.msg_error.value = error.response.data.msg
+                store.msg_error = error.response.data.msg
             }
             catch {
-                store.msg_error.value = error
+                store.msg_error = error
             }
         })
+}
+
+const load_more_msg = (id) => {
+    msg_page.value = String(parseInt(msg_page.value) + 1)
+    api_get_chat_detail(id)
 }
 
 const remove_form_media = () => {
@@ -148,10 +182,10 @@ const get_search_chat = () => {
             })
             .catch(error => {
                 try {
-                    store.msg_error.value = error.response.data.msg
+                    store.msg_error = error.response.data.msg
                 }
                 catch {
-                    store.msg_error.value = error
+                    store.msg_error = error
                 }
             })
     }
@@ -201,10 +235,10 @@ const submit_new_chat = () => {
         })
         .catch(error => {
             try {
-                store.msg_error.value = error.response.data.msg
+                store.msg_error = error.response.data.msg
             }
             catch {
-                store.msg_error.value = error
+                store.msg_error = error
             }
         })
 }
@@ -224,10 +258,10 @@ const delete_chat = (id) => {
         })
         .catch(error => {
             try {
-                store.msg_error.value = "You don't have permission."
+                store.msg_error = "You don't have permission."
             }
             catch {
-                store.msg_error.value = error
+                store.msg_error = error
             }
         })
 }
@@ -242,10 +276,10 @@ const show_member = (id) => {
         })
         .catch(error => {
             try {
-                store.msg_error.value = error.response.data.msg
+                store.msg_error = error.response.data.msg
             }
             catch {
-                store.msg_error.value = error
+                store.msg_error = error
             }
         })
 }
@@ -274,10 +308,10 @@ const submit_add_new_member = () => {
         })
         .catch(error => {
             try {
-                store.msg_error.value = error.response.data.msg
+                store.msg_error = error.response.data.msg
             }
             catch {
-                store.msg_error.value = error
+                store.msg_error = error
             }
         })
 }
@@ -302,10 +336,10 @@ const submit_remove_member = (username, index) => {
         })
         .catch(error => {
             try {
-                store.msg_error.value = error.response.data.msg
+                store.msg_error = error.response.data.msg
             }
             catch {
-                store.msg_error.value = error
+                store.msg_error = error
             }
         })
 }
@@ -370,7 +404,7 @@ const submit_modify_form = () => {
                     </div>
                 </div>
             </div>
-            <div v-for="chat in chat_list" :key="chat.id" @click="get_chat_detail(chat)">
+            <div v-for="chat in chat_list" :key="chat.id" @click="msg_list = []; get_chat_detail(chat)">
                 <div>
                     <img class="avatar_chat" :src="store.domain + chat.avatar">
                 </div>
@@ -393,6 +427,9 @@ const submit_modify_form = () => {
                 </div>
                 <div>
                     <div>
+                        <div>
+                            <small @click="load_more_msg(cur_chat.id)">read more</small>
+                        </div>
                         <div v-for="(msg, index) in msg_list">
                             <div v-if="decoded.user_id == msg.sender" style="background-color: blue;">
                                 <div>

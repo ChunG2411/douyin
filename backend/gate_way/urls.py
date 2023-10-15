@@ -24,8 +24,10 @@ from tool.views import (
     NotiView, DeleteNotiView,
     ChatView, 
     MessageView,
-    get_member_of_chat, add_member_to_chat, remove_member_to_chat,
-    testview
+    get_member_of_chat, add_member_to_chat, remove_member_to_chat
+)
+from home.views import (
+    home_followed
 )
 
 urlpatterns = [
@@ -77,5 +79,6 @@ urlpatterns = [
     path("chat/<str:pk>/add", add_member_to_chat, name="chat-add"),
     path("chat/<str:pk>/remove", remove_member_to_chat, name="chat-remove"),
 
-    path('test', testview)
+    path("home/followed", home_followed, name="home-followed"),
+    
 ]

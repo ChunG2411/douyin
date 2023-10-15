@@ -18,6 +18,10 @@ const close_popup = [() => {
 <template>
   <div class="taskbar">
     <router-link to="/">home</router-link>
+
+    <router-link to="/followed" v-if="store.is_login">followed</router-link>
+    <button v-else @click="show_login_popup = !show_login_popup">followed</button>
+
     <router-link to="/profile/self" v-if="store.is_login">profile</router-link>
     <button v-else @click="show_login_popup = !show_login_popup">profile</button>
 

@@ -53,7 +53,7 @@ class NotiConsumer(WebsocketConsumer):
                 user_receive = comment.user
             elif type == "5":
                 user_receive = User.objects.get(username=data_json['user_receive'])
-            
+
             noti = Noti.objects.filter(user=user_receive, video=video, type=type).first()
             if noti:
                 if noti.status:
@@ -140,21 +140,17 @@ class ChatConsumer(WebsocketConsumer):
             receiver = Chat.objects.get(id=data_json['receiver'])
             member = receiver.member.values_list('username', flat=True)
 
-            message = Message.objects.create(
-                                            sender=sender,
-                                            receiver=receiver,
-                                            context=data_json['context'],
-                                            media=data_json['media'])
-
             async_to_sync(self.channel_layer.group_send)(
                 self.group_name, {
                     'type': 'chat',
                     'data': {
                         'sender': sender.username,
-                        'receiver': str(receiver.id),
+                        'receiver': {
+                            'avatar': receiver.avatar.url,
+                            'name': receiver.name
+                        },
                         'member': list(member),
-                        'context': message.context,
-                        'media': message.media.url if message.media else ''
+                        'text': sender.get_full_name + ' sended new message.'
                     }
                 }
             )
@@ -167,4 +163,55 @@ class ChatConsumer(WebsocketConsumer):
             )
 
     def chat(self, e):
+        self.send(text_data=json.dumps(e, default=str))
+
+
+class MessageConsumer(WebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.group_name = 'message'
+
+    def connect(self):
+        self.accept()
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name,
+            self.channel_name
+        )
+
+    def disconnect(self, code):
+        async_to_sync(self.channel_layer.group_discard)(
+            self.group_name,
+            self.channel_name
+        )
+
+    def receive(self, text_data=None, bytes_data=None):
+        data_json = json.loads(text_data)
+        try:
+            message = Message.objects.first()
+
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_name, {
+                    "type": "message",
+                    "data": {
+                            "id": str(message.id),
+                            "context": message.context,
+                            "media": message.media.url if message.media else '',
+                            "create_time": str(message.create_time.date()) + ' ' + str(message.create_time.time()),
+                            "sender": str(message.sender.id),
+                            "receiver": str(message.receiver.id),
+                            "reader": [
+                                str(message.sender.id)
+                            ]
+                    }
+                }
+            )
+        except Exception as e:
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_name, {
+                    'type': 'message',
+                    'data': None
+                }
+            )
+
+    def message(self, e):
         self.send(text_data=json.dumps(e, default=str))

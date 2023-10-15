@@ -1,5 +1,6 @@
 const socket_noti = new WebSocket(`ws://127.0.0.1:8000/ws/noti/`)
 const socket_chat = new WebSocket(`ws://127.0.0.1:8000/ws/chat/`)
+const socket_message = new WebSocket(`ws://127.0.0.1:8000/ws/message/`)
 
 function connect_noti() {
     socket_noti.onopen = function () {
@@ -27,6 +28,19 @@ function connect_chat() {
     }
 }
 
+function connect_message() {
+    socket_message.onopen = function () {
+        console.log("Websocket message is connected")
+    }
+    socket_message.onclose = function () {
+        console.log("Websocket message is disconnected")
+        setInterval(function () {
+            console.log("Websocket message reconnecting...")
+            connect_message()
+        }, 2000)
+    }
+}
+
 export {
-    socket_noti, connect_noti, socket_chat, connect_chat
+    socket_noti, connect_noti, socket_chat, connect_chat, socket_message, connect_message
 }

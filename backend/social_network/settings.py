@@ -46,7 +46,8 @@ INSTALLED_APPS = [
 
     "user",
     "video",
-    "tool"
+    "tool",
+    "home"
 ]
 
 MIDDLEWARE = [

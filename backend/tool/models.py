@@ -76,7 +76,7 @@ class Message(models.Model):
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['create_time']
+        ordering = ['-create_time']
         db_table = 'tb_message'
         verbose_name = 'Message'
 
