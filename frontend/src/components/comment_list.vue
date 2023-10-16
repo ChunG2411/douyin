@@ -18,6 +18,7 @@ const store = Store()
 
 const comment_list = ref([])
 const comment_form = ref('')
+const page_comment = ref(0)
 
 const api_get_comment_list = () => {
     let header = null
@@ -89,13 +90,46 @@ const comment_video = () => {
         })
 }
 
+const loadMoreComment = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page_comment.value += 1
+        axios.get(`${store.domain}/api/video/${props.video_id}/comment-list?page=${page_comment.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page_comment.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        comment_list.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
+window.addEventListener('scroll', loadMoreComment);
+
 </script>
 
 <template>
     <div class="comment_list">
-        <div v-for="comment in comment_list" :key="comment.id">
-            <CommentItem :data="comment" />
+        <div class="comment_list_item" v-on:scroll="loadMoreComment">
+            <div v-for="comment in comment_list" :key="comment.id">
+                <CommentItem :data="comment" />
+            </div>
         </div>
+
 
         <div>
             <form @submit.prevent="comment_video" v-if="store.is_login">
@@ -109,3 +143,11 @@ const comment_video = () => {
         </div>
     </div>
 </template>
+
+<style>
+.comment_list_item {
+    overflow-y: scroll;
+    min-height: max-content;
+    max-height: 300px;
+}
+</style>

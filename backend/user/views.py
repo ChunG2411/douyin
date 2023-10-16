@@ -220,14 +220,18 @@ class UserVideoView(APIView):
             return None
 
     def get(self, request, username):
+        page = request.GET.get('page')
+        if not page:
+            page = "0"
+
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
 
         if request.user == user:
-            videos = Video.objects.filter(user=user)
+            videos = Video.objects.filter(user=user)[(int(page)*5):(int(page)+1)*5]
         else:
-            videos = Video.objects.filter(user=user, public=True)
+            videos = Video.objects.filter(user=user, public=True)[(int(page)*5):(int(page)+1)*5]
         serializers = VideoSerializer(videos, many=True)
 
         return Response(response_success(serializers.data), status=200)
@@ -322,6 +326,10 @@ class UserLikeVideoView(APIView):
             return None
 
     def get(self, request, username):
+        page = request.GET.get('page')
+        if not page:
+            page = "0"
+
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
@@ -329,7 +337,7 @@ class UserLikeVideoView(APIView):
             return Response(response_error("Check user login."), status=400)
 
         likes = LikeVideo.objects.filter(user=user)
-        serializers = VideoSerializer([i.video for i in likes], many=True)
+        serializers = VideoSerializer([i.video for i in likes][(int(page)*5):(int(page)+1)*5], many=True)
 
         return Response(response_success(serializers.data), status=200)
 
@@ -343,6 +351,10 @@ class UserSaveVideoView(APIView):
             return None
 
     def get(self, request, username):
+        page = request.GET.get('page')
+        if not page:
+            page = "0"
+
         user = self.get_user(username)
         if not user:
             return Response(response_error("User don't exist."), status=400)
@@ -350,7 +362,7 @@ class UserSaveVideoView(APIView):
             return Response(response_error("Check user login."), status=400)
 
         saves = Save.objects.filter(user=user)
-        serializers = VideoSerializer([i.video for i in saves], many=True)
+        serializers = VideoSerializer([i.video for i in saves][(int(page)*5):(int(page)+1)*5], many=True)
 
         return Response(response_success(serializers.data), status=200)
 

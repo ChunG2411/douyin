@@ -24,7 +24,7 @@ class MusicView(APIView):
         musics = Music.objects.all()
         serializer = MusicSerializer(musics, many=True)
         return Response(response_success(serializer.data), status=200)
-    
+
     def post(self, request):
         if request.user.id != None:
             request_copy = request.POST.copy()
@@ -36,7 +36,7 @@ class MusicView(APIView):
                 serializer.save()
                 return Response(response_success(serializer.data), status=201)
             return Response(response_error(serializer.errors), status=400)
-        
+
         return Response(response_error("Check user login."), status=400)
 
 
@@ -52,7 +52,7 @@ class MusicDetailView(APIView):
     def delete(self, request, pk):
         if request.user.id == None:
             return Response(response_error("Check user login."), status=400)
-        
+
         try:
             music = Music.objects.get(id=pk)
             music = Music.objects.get(id=music.id)
@@ -177,6 +177,10 @@ def LikeCommentView(request, pk):
 @api_view(['GET'])
 def CommentView(request, pk):
     try:
+        page = request.GET.get('page')
+        if not page:
+            page = "0"
+
         video = Video.objects.get(id=pk)
         try:
             query_parent = request.query_params['parent']
@@ -184,7 +188,7 @@ def CommentView(request, pk):
         except:
             parent = None
 
-        comments = CommentVideo.objects.filter(video=video, parent=parent)
+        comments = CommentVideo.objects.filter(video=video, parent=parent)[(int(page)*5):(int(page)+1)*5]
         serializers = CommentVideoSerializer(
             comments, many=True, context={'request': request})
         return Response(response_success(serializers.data), status=200)

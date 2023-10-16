@@ -24,6 +24,9 @@ const search_result = reactive({
 })
 const show_login_popup = ref(false)
 const show_comment = ref(false)
+const page_search_video = ref(0)
+const page_search_user = ref(0)
+
 
 const close_popup = [() => {
     show_login_popup.value = false
@@ -169,6 +172,67 @@ const save_video = (id) => {
     }
 }
 
+const loadMoreSearch_user = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page_search_user.value += 1
+        axios.get(`${store.domain}/api/search/user?text=${route.params.text}&page=${page_search_user.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page_search_user.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        search_result.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
+
+const loadMoreSearch_video = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page_search_video.value += 1
+        axios.get(`${store.domain}/api/search/video?text=${route.params.text}&page=${page_search_video.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page_search_video.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        search_result.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
+
+window.addEventListener('scroll', loadMoreSearch_user);
+window.addEventListener('scroll', loadMoreSearch_video);
+
 </script>
 
 <template>
@@ -180,7 +244,7 @@ const save_video = (id) => {
 
         <div class="search_board">
             <div class="search_board_user" v-if="active_bar == 'user'">
-                <div v-if="search_result.user.length > 0">
+                <div class="list_user_search" v-if="search_result.user.length > 0" v-on:scroll="loadMoreSearch_user">
                     <div v-for="user in search_result.user">
                         <img class="profile_avatar_search" :src="store.domain + user.avatar">
                         <p>{{ user.full_name }}</p>
@@ -193,7 +257,7 @@ const save_video = (id) => {
             </div>
 
             <div class="search_board_video" v-else-if="active_bar == 'video'">
-                <div v-if="search_result.video.length > 0">
+                <div class="list_video_search" v-if="search_result.video.length > 0" v-on:scroll="loadMoreSearch_video">
                     <div v-for="video in search_result.video" :key="video.id">
                         <div>
                             <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }" v-if="my_user!=video.user_infor.username">
@@ -236,3 +300,16 @@ const save_video = (id) => {
         <AuthenComponent v-on-click-outside="close_popup" />
     </div>
 </template>
+
+<style>
+.list_user_search{
+    overflow-y: scroll;
+    min-height: max-content;
+    max-height: 500px;
+}
+.list_video_search{
+    overflow-y: scroll;
+    min-height: max-content;
+    max-height: 500px;
+}
+</style>

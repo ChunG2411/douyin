@@ -20,13 +20,17 @@ from .serializers import NotiSerializer, ChatSerializer, MessageSerializer
 def SearchVideo(request):
     text = request.query_params['text']
 
+    page = request.GET.get('page')
+    if not page:
+        page = "0"
+
     if request.user.id != None:
         searchs = SearchRecent.objects.filter(user=request.user)
         if searchs.count() >= 5:
             searchs.last().delete()
         SearchRecent.objects.create(user=request.user, text=text)
 
-    videos = Video.objects.filter(descrip__contains=text)
+    videos = Video.objects.filter(descrip__contains=text)[(int(page)*5):(int(page)+1)*5]
     serializers = VideoSerializer(videos, many=True, context={'request': request})
 
     return Response(response_success(serializers.data), status=200)
@@ -36,6 +40,10 @@ def SearchVideo(request):
 def SearchUser(request):
     text = request.query_params['text']
 
+    page = request.GET.get('page')
+    if not page:
+        page = "0"
+
     if request.user.id != None:
         searchs = SearchRecent.objects.filter(user=request.user)
         if searchs.count() >= 5:
@@ -43,7 +51,7 @@ def SearchUser(request):
         SearchRecent.objects.create(user=request.user, text=text)
 
     users = User.objects.exclude(id=request.user.id).filter(Q(first_name__contains=text) | Q(
-        last_name__contains=text) | Q(username__contains=text))
+        last_name__contains=text) | Q(username__contains=text))[(int(page)*5):(int(page)+1)*5]
     serializers = UserDetailSerializer(users, many=True)
 
     return Response(response_success(serializers.data), status=200)
@@ -90,14 +98,18 @@ def SearchMessage(request, pk):
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def NotiView(request):
-    noti = Noti.objects.filter(user=request.user)
+    page = request.GET.get('page')
+    if not page:
+        page = "0"
+
+    noti = Noti.objects.filter(user=request.user)[(int(page)*5):(int(page)+1)*5]
     serializer = NotiSerializer(noti, many=True)
     ser_copy = serializer.data
 
-    noti_not_read = noti.filter(status=False)
-    for i in noti_not_read:
-        i.status = True
-        i.save()
+    for i in noti:
+        if i.status == False:
+            i.status = True
+            i.save()
 
     return Response(response_success(ser_copy), status=200)
 

@@ -17,6 +17,7 @@ const my_user = localStorage.getItem('username')
 const show_this_comment = ref(true)
 const child_comment = ref([])
 const show_child_comment = ref(false)
+const page_comment_child = ref(0)
 
 
 const api_get_child_comment = () => {
@@ -111,6 +112,36 @@ const delete_comment = () => {
         })
 }
 
+const loadMoreComment_child = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page_comment_child.value += 1
+        axios.get(`${store.domain}/api/video/${props.data.video}/comment-list?parent=${props.data.id}&page=${page_comment_child.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page_comment_child.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        child_comment.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
+window.addEventListener('scroll', loadMoreComment_child);
+
 </script>
 
 <template>
@@ -149,10 +180,18 @@ const delete_comment = () => {
                 <button @click="delete_comment" v-if="my_user == props.data.user_infor.username">delete</button>
             </div>
         </div>
-        <div>
+        <div class="comment_list_child" v-on:scroll="loadMoreComment_child">
             <div v-for="child in child_comment" :key="child.id">
                 <CommentItemRecursive :data="child" />
             </div>
         </div>
     </div>
 </template>
+
+<style>
+.comment_list_child {
+    overflow-y: scroll;
+    min-height: max-content;
+    max-height: 300px;
+}
+</style>

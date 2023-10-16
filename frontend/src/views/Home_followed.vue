@@ -13,6 +13,7 @@ const store = Store()
 
 const my_user = localStorage.getItem('username')
 const list_video = ref([])
+const page = ref(0)
 
 const show_login_popup = ref(false)
 const show_component = reactive({
@@ -122,14 +123,41 @@ const handle_show_component = (target) => {
     }
 }
 
-const loadMore = () => {
-    console.log("end");
+
+const loadMore = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page.value += 1
+        axios.get(`${store.domain}/api/home/followed?page=${page.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        list_video.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
 }
+window.addEventListener('scroll', loadMore);
 
 </script>
 
 <template>
-    <div class="home">
+    <div class="home" v-on:scroll="loadMore">
         <div v-for="video in list_video" :key="video.id">
             <div>
                 <div>
@@ -185,3 +213,11 @@ const loadMore = () => {
         <AuthenComponent v-on-click-outside="close_popup" />
     </div>
 </template>
+
+<style>
+.home {
+    overflow-y: scroll;
+    height: 800px;
+    width: 600px;
+}
+</style>
