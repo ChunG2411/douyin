@@ -21,7 +21,11 @@ from social_network.function import get_absolute_media_path
 # Create your views here.
 class MusicView(APIView):
     def get(self, request):
-        musics = Music.objects.all()
+        page = request.GET.get('page')
+        if not page:
+            page = "0"
+            
+        musics = Music.objects.all()[(int(page)*5):(int(page)+1)*5]
         serializer = MusicSerializer(musics, many=True)
         return Response(response_success(serializer.data), status=200)
 
@@ -66,7 +70,11 @@ class MusicDetailView(APIView):
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def get_my_music(request):
-    music = Music.objects.filter(user=request.user)
+    page = request.GET.get('page')
+    if not page:
+        page = "0"
+
+    music = Music.objects.filter(user=request.user)[(int(page)*5):(int(page)+1)*5]
     serializer = MusicSerializer(music, many=True)
     return Response(response_success(serializer.data), status=200)
 
@@ -74,8 +82,12 @@ def get_my_music(request):
 @api_view(['GET'])
 def get_videolist_of_music(request, pk):
     try:
+        page = request.GET.get('page')
+        if not page:
+            page = "0"
+
         music = Music.objects.get(id=pk)
-        videos = Video.objects.filter(music=music)
+        videos = Video.objects.filter(music=music)[(int(page)*5):(int(page)+1)*5]   
         serializers = VideoSerializer(videos, many=True)
         return Response(response_success(serializers.data), status=200)
     except Exception as e:

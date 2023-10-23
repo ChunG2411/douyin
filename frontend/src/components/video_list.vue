@@ -9,10 +9,14 @@ const props = defineProps({
     username: String
 })
 
+const top_page = ref(null)
+
 watch(props, (oldvalue, currentvalue) => {
     api_get_video_list(currentvalue.active)
+    scrollToElement(top_page.value)
     page_video.value = 0
     type.value = currentvalue.active
+
 })
 
 const store = Store()
@@ -71,19 +75,41 @@ const loadMoreVideo = (e) => {
             })
     }
 }
-window.addEventListener('scroll', loadMoreVideo);
+window.addEventListener('scroll', loadMoreVideo)
+
+const scrollToElement = (element) => {
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+}
 
 </script>
 
 <template>
     <div class="video_list" v-on:scroll="loadMoreVideo">
+        <div ref="top_page" style="display: none;"></div>
         <div class="video_card" v-if="video_list" v-for="video in video_list" :key="video.id">
-            <router-link :to="{ name: 'video', params: { id: video.id } }">
-                <video class="video_card" :src="store.domain + video.video" />
-                <p>{{ video.descrip }}</p>
-                <p>{{ video.like_count }}</p>
-                <p>{{ video.comment_count }}</p>
-                <p>{{ video.save_count }}</p>
+            <router-link class="normal_text normal_color no_decor" :to="{ name: 'video', params: { id: video.id } }">
+                <video class="profile_video_card" :src="store.domain + video.video" />
+                <div class="card_content">
+                    <div>
+                        <p class="normal_text normal_color text_over">{{ video.descrip.slice(0,15) }}...</p>
+                    </div>
+                    <div class="card_content_action">
+                        <div>
+                            <font-awesome-icon :icon="['fas', 'heart']" class="icon white" />
+                            <p class="normal_text normal_color">{{ video.like_count }}</p>
+                        </div>
+                        <div>
+                            <font-awesome-icon :icon="['fas', 'comment']" class="icon white" />
+                            <p class="normal_text normal_color">{{ video.comment_count }}</p>
+                        </div>
+                        <div>
+                            <p class="normal_text normal_color">{{ video.save_count }}</p>
+                            <font-awesome-icon :icon="['fas', 'star']" class="icon white" />
+                        </div>
+                    </div>
+                </div>
             </router-link>
         </div>
     </div>
@@ -92,8 +118,49 @@ window.addEventListener('scroll', loadMoreVideo);
 <style>
 .video_list {
     overflow-y: scroll;
-    min-height: max-content;
-    max-height: 300px;
-    width: 500px;
+    height: 90%;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 150px);
+    padding: 5px 0 0 5px;
+    gap: 10px;
+}
+
+.video_list::-webkit-scrollbar {
+    width: 0.5rem;
+}
+
+.video_list::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.video_list::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 0.3rem;
+}
+
+.video_card {
+    width: 150px;
+    height: 280px;
+    border-radius: 10px;
+    background: var(--hover_color);
+    position: relative;
+}
+
+.card_content {
+    position: absolute;
+    bottom: 0;
+    height: max-content;
+    width: 90%;
+    padding: 5px;
+}
+.card_content_action{
+    display: flex;
+    justify-content: space-between;
+}
+.card_content_action div{
+    display: flex;
+    gap: 2px;
+    align-items: center;
 }
 </style>

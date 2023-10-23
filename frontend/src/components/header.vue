@@ -185,66 +185,92 @@ const close_popup = [() => {
     have_new_chat.status = false
 }]
 
+const handleClickSearch = (text) => {
+    search.context = text
+}
+
 const redirectSearch = () => {
-    router.push({ name: 'search', params: { text: search.context } })
+    if (search.context) {
+        router.push({ name: 'search', params: { text: search.context } })
+    }
+    else return
 }
 
 </script>
 
 <template>
     <div class="header">
-        <router-link :to="{ name: 'home', params: { username: '' } }">home</router-link>
+        <router-link :to="{ name: 'home', params: { username: '' } }" class="text normal_color">home</router-link>
 
         <div class="search">
-            <input type="text" id="search-bar" placeholder="What do you want to find?" v-model="search.context"
-                @input="get_search_suggest" @click="click_input" v-on-click-outside="click_outside"
-                v-on:keyup.enter="redirectSearch">
-            <button @click="clear_context">clear</button>
-        </div>
-
-        <div class="search-popup" v-show="show_search_popup">
-            <div id="suggest" v-if="search.context">
-                <router-link :to="{ name: 'search', params: { text: suggest } }" v-for="suggest in search.suggest">
-                    <p>{{ suggest }}</p>
-                </router-link>
+            <input type="text" class="input_search" id="search-bar" placeholder="What do you want to find?"
+                v-model="search.context" @input="get_search_suggest" @click="click_input" v-on-click-outside="click_outside"
+                v-on:keyup.enter="redirectSearch" autocomplete="off">
+            <div>
+                <font-awesome-icon class="icon gray" :icon="['fas', 'x']" @click="clear_context" />
             </div>
 
-            <div id="recent" v-else>
-                <router-link :to="{ name: 'search', params: { text: recent } }" v-for="recent in search.recent">
-                    <p>{{ recent }}</p>
-                </router-link>
+            <div class="search_popup" v-show="show_search_popup">
+                <div id="suggest" v-if="search.context">
+                    <router-link :to="{ name: 'search', params: { text: suggest } }" v-for="suggest in search.suggest"
+                        @click="handleClickSearch(suggest)" class="normal_text normal_color search_popup_item">{{ suggest }}
+                    </router-link>
+                </div>
+                <div id="recent" v-else>
+                    <router-link :to="{ name: 'search', params: { text: recent } }" v-for="recent in search.recent"
+                        @click="handleClickSearch(recent)" class="normal_text normal_color search_popup_item">{{ recent }}
+                    </router-link>
+                </div>
             </div>
         </div>
 
         <div class="action">
-            <div class="profile" v-if="store.is_login">
-                <button @click="show_noti_popup = true">Noti</button>
+            <div class="action" v-if="store.is_login">
+                <div class="action_item" @click="show_noti_popup = true">
+                    <font-awesome-icon :icon="['fas', 'bell']" class="icon white" />
+                    <p class="text normal_color">Noti</p>
+                </div>
 
-                <router-link to="/chat">
-                    <button>Chat</button>
+                <router-link to="/chat" class="action_item no_decor">
+                    <font-awesome-icon :icon="['fas', 'message']" class="icon white" />
+                    <p class="text normal_color">Chat</p>
                 </router-link>
 
-                <router-link to="/creator">
-                    <button>Creator</button>
+                <router-link to="/creator" class="action_item no_decor">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="icon white" />
+                    <p class="text normal_color">Creator</p>
                 </router-link>
 
-                <router-link to="/profile/self">
-                    <img class="profile_avatar_icon" :src="store.domain + store.my_profile.avatar">
-                </router-link>
+                <div class="action_item" id="action_item_hover">
+                    <img class="profile_avatar_header" :src="store.domain + store.my_profile.avatar">
+                </div>
 
-                <button @click="logout">logout</button>
+                <div class="action_item_popup">
+                    <router-link to="/profile/self" class="action_item_popup_options no_decor">
+                        <font-awesome-icon :icon="['fas', 'user']" class="icon white" />
+                        <p class="text normal_color">Profile</p>
+                    </router-link>
+                    <div class="action_item_popup_options">
+                        <font-awesome-icon :icon="['fas', 'gear']" class="icon white" />
+                        <p class="text normal_color">Setup</p>
+                    </div>
+                    <div @click="logout" class="action_item_popup_options">
+                        <font-awesome-icon :icon="['fas', 'arrow-right-from-bracket']" class="icon white" />
+                        <p class="text normal_color">Logout</p>
+                    </div>
+                </div>
             </div>
 
-            <div class="login" v-else>
-                <button @click="show_login_popup = true">Login</button>
+            <div class="action_item" v-else>
+                <p @click="show_login_popup = true" class="text normal_color">Login</p>
             </div>
         </div>
 
         <div class="popup" v-if="show_login_popup || show_noti_popup || have_new_noti || have_new_chat.status">
-            <div v-if="show_login_popup">
+            <div class="popup_board" v-if="show_login_popup">
                 <AuthenComponent v-on-click-outside="close_popup" />
             </div>
-            <div v-if="show_noti_popup">
+            <div class="popup_board" v-if="show_noti_popup">
                 <Notification v-on-click-outside="close_popup" />
             </div>
             <div v-if="have_new_noti" v-on-click-outside="close_popup">
@@ -275,10 +301,108 @@ const redirectSearch = () => {
     margin-top: 0;
     margin-left: 0;
     width: 100%;
+    height: 50px;
+    padding: 5px 20px 5px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: fixed;
     z-index: 50;
+    background: var(--background_color);
+}
+
+.search {
+    width: 200px;
+    height: max-content;
+    padding: 0 10px 0 10px;
+    background: var(--background_color);
+    border-radius: 15px;
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid var(--boder_color);
+}
+
+.input_search {
+    border: 0;
+    background: var(--background_color);
+    color: white;
+}
+
+.input_search:focus {
+    border: 0;
+    outline: none;
+}
+
+.search_popup {
+    position: fixed;
+    margin-top: 30px;
+    margin-left: 0;
+    width: 180px;
+    height: max-content;
+    background: var(--background_popup_color);
+    border-radius: 5px;
+    padding: 10px;
+    justify-content: left;
+    box-shadow: 0 0 2px var(--boder_color);
+}
+
+.search_popup_item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 3px;
+    margin-left: 5px;
+}
+
+.action {
+    display: flex;
+    width: max-content;
+    right: 0;
+    margin-right: 10px;
+}
+
+.action_item {
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    margin-right: 5px;
+    cursor: pointer;
+    border: 1px solid var(--boder_color);
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.action_item:hover {
+    background: var(--hover_color);
+}
+
+#action_item_hover:hover+.action_item_popup, .action_item_popup:hover {
+    display: flex;
+}
+
+.action_item_popup {
+    position: fixed;
+    top: 55px;
+    right: 5px;
+    width: 180px;
+    height: max-content;
+    background: var(--background_popup_color);
+    border-radius: 5px;
+    padding: 10px;
+    display: none;
+    justify-content: space-between;
+    box-shadow: 0 0 2px var(--boder_color);
+}
+
+.action_item_popup_options {
+    display: flex;
+    flex-direction: column;
+    margin-right: 5px;
+    cursor: pointer;
+    align-items: center;
+    padding: 5px;
+    border-radius: 5px;
+}
+.action_item_popup_options:hover{
+    background: var(--hover_color);
 }
 </style>

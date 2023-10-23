@@ -30,6 +30,9 @@ const show_music_list = ref(false)
 const music_list = ref([])
 const my_video_list = ref([])
 const my_music_list = ref([])
+const page_music = ref(0)
+const page_video = ref(0)
+const page_music_select = ref(0)
 
 const preveiw = reactive({
     video: null,
@@ -236,6 +239,95 @@ const active_tab = (type) => {
     }
 }
 
+const loadMoreVideo = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page_video.value += 1
+        axios.get(`${store.domain}/api/user/${localStorage.getItem('username')}/video?page=${page_video.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page_video.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        my_video_list.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
+const loadMoreMusic = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight ) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page_music.value += 1
+        axios.get(`${store.domain}/api/music/self?page=${page_music.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page_music.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        my_music_list.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
+const loadMoreMusic_list = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight ) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page_music_select.value += 1
+        axios.get(`${store.domain}/api/music?page=${page_music_select.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page_music_select.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        music_list.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
+
+window.addEventListener('scroll', loadMoreVideo)
+window.addEventListener('scroll', loadMoreMusic)
+window.addEventListener('scroll', loadMoreMusic_list)
+
 </script>
 
 <template>
@@ -269,7 +361,7 @@ const active_tab = (type) => {
                     <button type="submit">Submit</button>
                 </form>
 
-                <div v-if="show_music_list" v-on-click-outside="close_popup">
+                <div class="music_list" v-if="show_music_list" v-on:scroll="loadMoreMusic_list" v-on-click-outside="close_popup">
                     <div v-for="music in music_list" :key="music.id" @click="select_music(music)"
                         v-if="music_list.length > 0">
                         <img class="profile_avatar_music_list" :src="store.domain + music.user_infor.avatar">
@@ -298,43 +390,47 @@ const active_tab = (type) => {
             <div v-if="active_bar.manager">
                 <div>
                     <b>video</b>
-                    <div v-for="video in my_video_list" :key="video.id">
-                        <video class="video_manager" :src="store.domain + video.video" />
-                        <p>{{ video.descrip }}</p>
-                        <div>
-                            <small v-if="video.public">Public</small>
-                            <small v-else>Private</small>
-                            <small>{{ video.create_time }}</small>
-                        </div>
-                        <div>
-                            <p>{{ video.like_count }}</p>
-                            <p>{{ video.comment_count }}</p>
-                            <p>{{ video.save_count }}</p>
-                        </div>
-                        <div>
-                            <router-link :to="{ name: 'video', params: { id: video.id } }">
-                                <button>View</button>
-                            </router-link>
-                            <button @click="delete_video(video.id)">Delete</button>
+                    <div class="my_video" v-on:scroll="loadMoreVideo">
+                        <div v-for="video in my_video_list" :key="video.id">
+                            <video class="video_manager" :src="store.domain + video.video" />
+                            <p>{{ video.descrip }}</p>
+                            <div>
+                                <small v-if="video.public">Public</small>
+                                <small v-else>Private</small>
+                                <small>{{ video.create_time }}</small>
+                            </div>
+                            <div>
+                                <p>{{ video.like_count }}</p>
+                                <p>{{ video.comment_count }}</p>
+                                <p>{{ video.save_count }}</p>
+                            </div>
+                            <div>
+                                <router-link :to="{ name: 'video', params: { id: video.id } }">
+                                    <button>View</button>
+                                </router-link>
+                                <button @click="delete_video(video.id)">Delete</button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div>
                     <b>music</b>
-                    <div v-for="music in my_music_list" :key="music.id">
-                        <img class="profile_avatar_music" :src="store.domain + music.user_infor.avatar">
-                        <p>{{ music.name }}</p>
-                        <div>
-                            <small>{{ music.create_time }}</small>
-                        </div>
-                        <div>
-                            <p>{{ music.video_count }} used</p>
-                        </div>
-                        <div>
-                            <router-link :to="{ name: 'music', params: { id: music.id } }">
-                                <button>View</button>
-                            </router-link>
-                            <button @click="delete_music(music.id)">Delete</button>
+                    <div class="my_music" v-on:scroll="loadMoreMusic">
+                        <div v-for="music in my_music_list" :key="music.id">
+                            <img class="profile_avatar_music" :src="store.domain + music.user_infor.avatar">
+                            <p>{{ music.name }}</p>
+                            <div>
+                                <small>{{ music.create_time }}</small>
+                            </div>
+                            <div>
+                                <p>{{ music.video_count }} used</p>
+                            </div>
+                            <div>
+                                <router-link :to="{ name: 'music', params: { id: music.id } }">
+                                    <button>View</button>
+                                </router-link>
+                                <button @click="delete_music(music.id)">Delete</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -342,3 +438,25 @@ const active_tab = (type) => {
         </div>
     </div>
 </template>
+
+<style>
+.my_music {
+    overflow-y: scroll;
+    height: 500px;
+    min-height: max-content;
+    width: 500px;
+}
+
+.my_video {
+    overflow-y: scroll;
+    height: 500px;
+    min-height: max-content;
+    width: 500px;
+}
+.music_list{
+    overflow-y: scroll;
+    height: 400px;
+    min-height: max-content;
+    width: 400px;
+}
+</style>

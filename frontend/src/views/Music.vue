@@ -13,6 +13,7 @@ const route = useRoute()
 const my_user = localStorage.getItem('username')
 const music = ref(null)
 const videos = ref(null)
+const page_video_of_music = ref(0)
 
 const api_get_music = () => {
     let header = null
@@ -58,6 +59,36 @@ const api_get_video_of_music = () => {
 }
 api_get_video_of_music()
 
+const loadMoreVideo_of_music = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        page_video_of_music.value += 1
+        axios.get(`${store.domain}/api/music/${route.params.id}/video?page=${page_video_of_music.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    page_video_of_music.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        videos.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
+window.addEventListener('scroll', loadMoreVideo_of_music);
+
 </script>
 
 <template>
@@ -80,12 +111,17 @@ api_get_video_of_music()
         </div>
 
         <div v-if="videos">
-            <div v-for="video in videos">
-                <router-link :to="{ name: 'video', params: { id: video.id } }">
-                    <video class="video_card" :src="store.domain + video.video" />
-                    <p>like: {{ video.like_count }}</p>
-                </router-link>
+            <div class="video_list" v-on:scroll="loadMoreVideo_of_music">
+                <div v-for="video in videos">
+                    <router-link :to="{ name: 'video', params: { id: video.id } }">
+                        <video class="video_card" :src="store.domain + video.video" />
+                        <p>like: {{ video.like_count }}</p>
+                    </router-link>
+                </div>
             </div>
         </div>
     </div>
 </template>
+
+<style>
+</style>

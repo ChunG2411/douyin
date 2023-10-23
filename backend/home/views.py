@@ -29,4 +29,18 @@ def home_followed(request):
     except Exception as e:
         return Response(response_error(str(e)), status=400)
     
+
+@api_view(['GET'])
+def home(request):
+    try:
+        page = request.GET.get('page')
+        if not page:
+            page = "0"
+        
+        videos = Video.objects.all()[(int(page)*5):(int(page)+1)*5]
+        serializer = VideoSerializer(videos, many=True, context={'request': request})
+        return Response(response_success(serializer.data), status=200)
+    
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
     

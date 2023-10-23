@@ -231,7 +231,7 @@ const submit_new_chat = () => {
         .then(response => {
             chat_list.value.push(response.data.data)
             member_chat.value = []
-            show_add_chat_popup = false
+            show_add_chat_popup.value = false
         })
         .catch(error => {
             try {

@@ -27,6 +27,7 @@ from tool.views import (
     get_member_of_chat, add_member_to_chat, remove_member_to_chat
 )
 from home.views import (
+    home,
     home_followed
 )
 
@@ -79,6 +80,7 @@ urlpatterns = [
     path("chat/<str:pk>/add", add_member_to_chat, name="chat-add"),
     path("chat/<str:pk>/remove", remove_member_to_chat, name="chat-remove"),
 
+    path("home", home, name="home"),
     path("home/followed", home_followed, name="home-followed"),
-    
+
 ]

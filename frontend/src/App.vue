@@ -16,8 +16,11 @@ import HeaderComponent from './components/header.vue'
 
 <style>
 .main{
-  top: 50px;
-  left: 50px;
+  top: 60px;
+  left: 120px;
   position: relative;
+  background: var(--background_color);
+  width: 100vw;
+  height: 100vh;
 }
 </style>

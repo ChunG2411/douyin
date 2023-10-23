@@ -40,23 +40,25 @@ const api_search_video = () => {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
     }
-    axios.get(`${store.domain}/api/search/video?text=${route.params.text}`, header)
-        .then(response => {
-            if (response.data.data.length > 0) {
-                search_result.video = response.data.data
-            }
-            else {
-                search_result.video = []
-            }
-        })
-        .catch(error => {
-            try {
-                store.msg_error = error.response.data.msg
-            }
-            catch {
-                store.msg_error = error
-            }
-        })
+    if (route.params.text) {
+        axios.get(`${store.domain}/api/search/video?text=${route.params.text}`, header)
+            .then(response => {
+                if (response.data.data.length > 0) {
+                    search_result.video = response.data.data
+                }
+                else {
+                    search_result.video = []
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
 }
 
 const api_search_user = () => {
@@ -260,7 +262,8 @@ window.addEventListener('scroll', loadMoreSearch_video);
                 <div class="list_video_search" v-if="search_result.video.length > 0" v-on:scroll="loadMoreSearch_video">
                     <div v-for="video in search_result.video" :key="video.id">
                         <div>
-                            <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }" v-if="my_user!=video.user_infor.username">
+                            <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }"
+                                v-if="my_user != video.user_infor.username">
                                 <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar">
                                 <p>{{ video.user_infor.full_name }}</p>
                             </router-link>
@@ -302,12 +305,13 @@ window.addEventListener('scroll', loadMoreSearch_video);
 </template>
 
 <style>
-.list_user_search{
+.list_user_search {
     overflow-y: scroll;
     min-height: max-content;
     max-height: 500px;
 }
-.list_video_search{
+
+.list_video_search {
     overflow-y: scroll;
     min-height: max-content;
     max-height: 500px;

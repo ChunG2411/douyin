@@ -165,7 +165,7 @@ window.addEventListener('scroll', loadMore);
                 </div>
                 <div>
                     <div>
-                        <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar"
+                        <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar"
                             @click="handle_show_component('profile')">
 
                         <button @click="like_video(video.id)" v-if="video.liked">liked: {{ video.like_count }}</button>
@@ -178,9 +178,9 @@ window.addEventListener('scroll', loadMore);
                     </div>
                     <div>
                         <router-link :to="{ name: 'music', params: { id: video.music } }" v-if="video.music">
-                            <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar">
+                            <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar">
                         </router-link>
-                        <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar" v-else>
+                        <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar" v-else>
                     </div>
                 </div>
                 <div>

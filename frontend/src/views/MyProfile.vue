@@ -2,7 +2,7 @@
 import VideoListComponent from '../components/video_list.vue'
 import { Store } from '../assets/store.js'
 
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import axios from 'axios'
 import { vOnClickOutside } from '@vueuse/components'
 
@@ -158,51 +158,88 @@ const upload_image = (e) => {
     preview_image_upload.value = URL.createObjectURL(modify_form.avatar)
 }
 
+// active tag
+const tag_item = ref(null)
+
+const remove_active_tag = () => {
+    tag_item.value.forEach(item => {
+        item.classList.remove('active_tag')
+    })
+}
+onMounted(() => {
+    tag_item.value = document.querySelectorAll('.tag_item')
+    tag_item.value.forEach(item => {
+        item.addEventListener('click', () => {
+            remove_active_tag()
+            item.classList.add('active_tag')
+            profile.active_tab = item.id
+        })
+    })
+})
+
 </script>
 
 <template>
     <div class="profile">
-        <div class="profile-infor" v-if="profile.infor">
-            <div>
-                <div>
+        <div class="profile_infor" v-if="profile.infor">
+            <div class="profile_infor_left">
+                <div class="profile_infor_avatar">
                     <img class="profile_avatar" :src="store.domain + profile.infor.avatar"
                         @click="show_avatar_popup = true">
-                    <p>fullname: {{ profile.infor?.full_name }}</p>
-
-                    <button @click="show_followed">followed: {{ profile.infor.followed_count }}</button>
-                    <button @click="show_follower">follower: {{ profile.infor.follower_count }}</button>
-
-                    <p @click="show_username_popup = true">username: {{ profile.infor.username }}</p>
-
-                    <p v-if="profile.infor.gender">gender: {{ profile.infor.gender }}</p>
-                    <p v-if="profile.infor.birth">birth: {{ profile.infor.birth }}</p>
-                    <p v-if="profile.infor.address">address: {{ profile.infor.address }}</p>
-                    <p v-if="profile.infor.introduce">introduce: {{ profile.infor.introduce }}</p>
                 </div>
-
-                <div>
-                    <button @click="show_modify_popup = true">Modify</button>
+                <div class="profile_infor_content">
+                    <div>
+                        <p class="fullname">{{ profile.infor.full_name }}</p>
+                        <p class="username gray" @click="show_username_popup = true">@{{ profile.infor.username }}</p>
+                    </div>
+                    <div class="profile_follow_infor">
+                        <button @click="show_followed">followed: {{ profile.infor.followed_count }}</button>
+                        <button @click="show_follower">follower: {{ profile.infor.follower_count }}</button>
+                    </div>
+                    <div>
+                        <div class="display_flex gap10">
+                            <div class="display_flex gap5 align_center">
+                                <font-awesome-icon :icon="['fas', 'transgender']" class="icon gray" />
+                                <p class="normal_text gray" v-if="profile.infor.gender">{{ profile.infor.gender }}
+                                </p>
+                            </div>
+                            <div class="display_flex gap5 align_center">
+                                <font-awesome-icon :icon="['fas', 'cake-candles']" class="icon gray" />
+                                <p class="normal_text gray" v-if="profile.infor.birth">{{ profile.infor.birth }}</p>
+                            </div>
+                        </div>
+                        <p class="normal_text gray" v-if="profile.infor.address">{{ profile.infor.address }}</p>
+                        <p class="normal_text gray" v-if="profile.infor.introduce">{{ profile.infor.introduce }}</p>
+                    </div>
                 </div>
             </div>
-
-            <div>
-                <p id="created" @click="profile.active_tab = 'video'">created ({{ profile.infor.video_count }})</p>
-                <p id="like" @click="profile.active_tab = 'like'">like</p>
-                <p id="save" @click="profile.active_tab = 'save'">save</p>
+            <div class="profile_infor_right">
+                <button @click="show_modify_popup = true">Modify</button>
             </div>
         </div>
 
-        <div class="profile-video">
+        <div class="profile_video">
+            <div class="profile_video_tag">
+                <div class="tag_item active_tag" id="video">
+                    <p class="text normal_color">Create</p>
+                </div>
+                <div class="tag_item" id="like">
+                    <p class="text normal_color">Like</p>
+                </div>
+                <div class="tag_item" id="save">
+                    <p class="text normal_color">Save</p>
+                </div>
+            </div>
             <VideoListComponent :active="profile.active_tab" :username="store.my_profile.username" />
         </div>
 
         <div class="popup"
             v-if="store.msg_error || show_modify_popup || show_followed_popup || show_follower_popup || show_avatar_popup || show_username_popup">
-            <div id="error-popup" v-if="store.msg_error">
+            <div id="error_popup" v-if="store.msg_error">
                 <p>{{ store.msg_error }}</p>
             </div>
 
-            <div id="modify-popup" v-if="show_modify_popup" v-on-click-outside="close_popup">
+            <div id="modify_popup" v-if="show_modify_popup" v-on-click-outside="close_popup">
                 <form @submit.prevent="modify_submit">
                     <span>
                         <p>email</p>
@@ -241,16 +278,38 @@ const upload_image = (e) => {
                 </form>
             </div>
 
-            <div id="followed-popup" v-if="show_followed_popup" v-on-click-outside="close_popup">
-                <b>Followed</b>
-                <p v-for="user in profile.followed">{{ user.username }}</p>
+            <div class="popup_board" id="followed_popup" v-if="show_followed_popup" v-on-click-outside="close_popup">
+                <p class="text normal_color">Followed</p>
+                <div class="follow_board">
+                    <div class="follow_board_item" v-for="user in profile.followed">
+                        <div class="follow_context">
+                            <img class="profile_avatar_folllow" :src="store.domain + user.avatar">
+                            <p class="text normal_color">{{ user.full_name }}</p>
+                        </div>
+                        <button>
+                            <router-link class="text normal_color"
+                                :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div id="follower-popup" v-if="show_follower_popup" v-on-click-outside="close_popup">
-                <b>Follower</b>
-                <p v-for="user in profile.follower">{{ user.username }}</p>
+            <div class="popup_board" id="follower_popup" v-if="show_follower_popup" v-on-click-outside="close_popup">
+                <p class="text normal_color">Follower</p>
+                <div class="follow_board">
+                    <div class="follow_board_item" v-for="user in profile.follower">
+                        <div class="follow_context">
+                            <img class="profile_avatar_folllow" :src="store.domain + user.avatar">
+                            <p class="text normal_color">{{ user.full_name }}</p>
+                        </div>
+                        <button>
+                            <router-link class="text normal_color"
+                                :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div id="avatar-popup" v-if="show_avatar_popup" v-on-click-outside="close_popup">
+            <div class="popup_board" id="avatar_popup" v-if="show_avatar_popup" v-on-click-outside="close_popup">
                 <form @submit.prevent="modify_submit">
                     <img class="show_profile_avatar" :src="store.domain + profile.infor?.avatar"
                         v-if="!preview_image_upload">
@@ -262,7 +321,7 @@ const upload_image = (e) => {
                 </form>
             </div>
 
-            <div id="username-popup" v-if="show_username_popup" v-on-click-outside="close_popup">
+            <div class="popup_board" id="username_popup" v-if="show_username_popup" v-on-click-outside="close_popup">
                 <form @submit.prevent="modify_submit">
                     <p>username</p>
                     <input type="text" v-model="modify_form.username">
@@ -275,7 +334,110 @@ const upload_image = (e) => {
 </template>
 
 <style>
-.popup div {
-    background: white;
+.profile {
+    width: 87%;
+    height: 90%;
+}
+
+.profile_infor {
+    width: 97%;
+    height: 30%;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.profile_infor_left {
+    display: flex;
+}
+
+.profile_infor_avatar {
+    padding: 10px 20px;
+}
+
+.fullname {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text_color);
+    margin-bottom: 0;
+}
+
+.username {
+    font-size: 13px;
+    font-weight: 350;
+    color: var(--text_color);
+    margin: 0;
+}
+
+.profile_follow_infor {
+    margin: 5px 0 5px 0;
+    display: flex;
+    gap: 5px;
+}
+
+.profile_video {
+    width: 97%;
+    height: 65%;
+    padding: 10px;
+}
+
+.profile_video_tag {
+    display: flex;
+    width: 100%;
+    padding: 5px;
+    height: 20px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.tag_item {
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.active_tag {
+    background: var(--hover_color);
+}
+
+.follow_board {
+    padding-top: 10px;
+    height: 400px;
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+}
+
+.follow_board::-webkit-scrollbar {
+    width: 0.5rem;
+}
+
+.follow_board::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.follow_board::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 0.3rem;
+}
+
+.follow_board_item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    align-items: center;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.follow_board_item:hover {
+    background: var(--hover_color);
+}
+
+.follow_context {
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 </style>
