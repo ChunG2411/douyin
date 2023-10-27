@@ -146,8 +146,8 @@ class ChatConsumer(WebsocketConsumer):
                     'data': {
                         'sender': sender.username,
                         'receiver': {
-                            'avatar': receiver.avatar.url,
-                            'name': receiver.name
+                            'avatar': receiver.avatar.url if receiver.type=='2' else sender.avatar.url,
+                            'name': receiver.name if receiver.type=='2' else sender.get_full_name
                         },
                         'member': list(member),
                         'text': sender.get_full_name + ' sended new message.'

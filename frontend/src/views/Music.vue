@@ -93,29 +93,37 @@ window.addEventListener('scroll', loadMoreVideo_of_music);
 
 <template>
     <div class="music">
-        <div v-if="music">
+        <div class="music_infor" v-if="music">
             <div>
-                <img class="profile_avatar_music" :src="store.domain + music.user_infor.avatar" />
+                <img class="avatar_music" :src="store.domain + music.user_infor.avatar" />
             </div>
             <div>
-                <b>music created by {{ music.user_infor.full_name }}</b>
+                <p class="text normal_color fs_20">Music created by {{ music.user_infor.full_name }}</p>
                 <router-link :to="{ name: 'guest_profile', params: { username: music.user_infor.username } }"
-                    v-if="my_user != music.user_infor.username">
-                    <p>{{ music.user_infor.full_name }}</p>
+                    v-if="my_user != music.user_infor.username" class="normal_text normal_color no_decor fs_15">{{
+                        music.user_infor.full_name }}
                 </router-link>
-                <router-link to="/profile/self" v-else>
-                    <p>{{ music.user_infor.full_name }}</p>
+                <router-link to="/profile/self" v-else class="normal_text normal_color no_decor fs_15">
+                    {{ music.user_infor.full_name }}
                 </router-link>
-                <p>{{ music.video_count }} used</p>
+                <p class="normal_text normal_color fs_13">{{ music.video_count }} used</p>
             </div>
         </div>
 
-        <div v-if="videos">
-            <div class="video_list" v-on:scroll="loadMoreVideo_of_music">
-                <div v-for="video in videos">
-                    <router-link :to="{ name: 'video', params: { id: video.id } }">
-                        <video class="video_card" :src="store.domain + video.video" />
-                        <p>like: {{ video.like_count }}</p>
+        <div class="music_video" v-if="videos">
+            <div class="music_video_list" v-on:scroll="loadMoreVideo_of_music">
+                <div class="video_card" v-for="video in videos">
+                    <router-link class="normal_text normal_color no_decor"
+                        :to="{ name: 'video', params: { id: video.id } }">
+                        <video class="profile_video_card" :src="store.domain + video.video" />
+                        <div class="card_content">
+                            <div class="card_content_action">
+                                <div>
+                                    <font-awesome-icon :icon="['fas', 'heart']" class="icon white" />
+                                    <p class="normal_text normal_color fs_13">{{ video.like_count }}</p>
+                                </div>
+                            </div>
+                        </div>
                     </router-link>
                 </div>
             </div>
@@ -124,4 +132,74 @@ window.addEventListener('scroll', loadMoreVideo_of_music);
 </template>
 
 <style>
+.music {
+    width: 87%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.music_infor {
+    height: 25%;
+    width: 95%;
+    padding: 10px 20px 0 20px;
+    display: flex;
+    gap: 20px;
+}
+
+.music_video {
+    width: 95%;
+    height: 70%;
+    padding: 0 20px;
+}
+
+.music_video_list {
+    overflow-y: scroll;
+    height: 100%;
+    width: 100%;
+    max-width: 850px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 150px);
+    gap: 10px;
+}
+
+.music_video_list::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.music_video_list::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.music_video_list::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+
+.video_card {
+    width: 150px;
+    height: 280px;
+    border-radius: 10px;
+    background: var(--hover_color);
+    position: relative;
+}
+
+.card_content {
+    position: absolute;
+    bottom: 0;
+    height: max-content;
+    width: 88%;
+    padding: 5px 10px;
+}
+.card_content_action{
+    display: flex;
+    justify-content: space-between;
+}
+.card_content_action div{
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
 </style>

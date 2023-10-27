@@ -112,8 +112,6 @@ def ModifyUser(request, pk):
             user.gender = "Female"
         elif gender == "Other":
             user.gender = "Other"
-        else:
-            return Response(response_error("Gender must in [M, F, O]."), status=400)
 
     # check birth
     if birth:
@@ -123,7 +121,7 @@ def ModifyUser(request, pk):
                 birth_split[1]), int(birth_split[2]))
             user.birth = birth
         except Exception as e:
-            return Response(response_error(str(e)), status=400)
+            pass
     else:
         user.birth = ""
 
@@ -229,9 +227,9 @@ class UserVideoView(APIView):
             return Response(response_error("User don't exist."), status=400)
 
         if request.user == user:
-            videos = Video.objects.filter(user=user)[(int(page)*5):(int(page)+1)*5]
+            videos = Video.objects.filter(user=user)[(int(page)*10):(int(page)+1)*10]
         else:
-            videos = Video.objects.filter(user=user, public=True)[(int(page)*5):(int(page)+1)*5]
+            videos = Video.objects.filter(user=user, public=True)[(int(page)*10):(int(page)+1)*10]
         serializers = VideoSerializer(videos, many=True)
 
         return Response(response_success(serializers.data), status=200)
@@ -337,7 +335,7 @@ class UserLikeVideoView(APIView):
             return Response(response_error("Check user login."), status=400)
 
         likes = LikeVideo.objects.filter(user=user)
-        serializers = VideoSerializer([i.video for i in likes][(int(page)*5):(int(page)+1)*5], many=True)
+        serializers = VideoSerializer([i.video for i in likes][(int(page)*10):(int(page)+1)*10], many=True)
 
         return Response(response_success(serializers.data), status=200)
 
@@ -362,7 +360,7 @@ class UserSaveVideoView(APIView):
             return Response(response_error("Check user login."), status=400)
 
         saves = Save.objects.filter(user=user)
-        serializers = VideoSerializer([i.video for i in saves][(int(page)*5):(int(page)+1)*5], many=True)
+        serializers = VideoSerializer([i.video for i in saves][(int(page)*10):(int(page)+1)*10], many=True)
 
         return Response(response_success(serializers.data), status=200)
 

@@ -173,74 +173,70 @@ const unfollow = () => {
                 </div>
                 <div class="profile_infor_content">
                     <div>
-                        <p class="fullname">{{ profile.infor.full_name }}</p>
-                        <p class="username">@{{ profile.infor.username }}</p>
+                        <p class="fullname fs_20">{{ profile.infor.full_name }}</p>
+                        <p class="username gray fs_13">@{{ profile.infor.username }}</p>
                     </div>
                     <div class="profile_follow_infor">
-                        <button @click="show_followed">followed: {{ profile.infor.followed_count }}</button>
-                        <button @click="show_follower">follower: {{ profile.infor.follower_count }}</button>
+                        <button @click="show_followed" class="fs_13">Followed: {{ profile.infor.followed_count }}</button>
+                        <button @click="show_follower" class="fs_13">Follower: {{ profile.infor.follower_count }}</button>
                     </div>
                     <div class="display_flex_column gap5">
                         <div class="display_flex gap10">
                             <div class="display_flex gap5 align_center">
-                                <font-awesome-icon :icon="['fas', 'transgender']" class="icon white"/>
-                                <p class="normal_text normal_color" v-if="profile.infor.gender">{{ profile.infor.gender }}</p>
+                                <font-awesome-icon :icon="['fas', 'transgender']" class="icon gray" />
+                                <p class="normal_text gray fs_13" v-if="profile.infor.gender">{{ profile.infor.gender }}</p>
                             </div>
                             <div class="display_flex gap5 align_center">
-                                <font-awesome-icon :icon="['fas', 'cake-candles']" class="icon white"/>
-                                <p class="normal_text normal_color" v-if="profile.infor.birth">{{ profile.infor.birth }}</p>
+                                <font-awesome-icon :icon="['fas', 'cake-candles']" class="icon gray" />
+                                <p class="normal_text gray fs_13" v-if="profile.infor.birth">{{ profile.infor.birth }}</p>
                             </div>
                         </div>
-                        <p class="normal_text gray" v-if="profile.infor.address">{{ profile.infor.address }}</p>
-                        <p class="normal_text normal_color" v-if="profile.infor.introduce">{{ profile.infor.introduce }}</p>
+                        <p class="normal_text gray fs_13" v-if="profile.infor.address">{{ profile.infor.address }}</p>
+                        <p class="normal_text gray fs_15" v-if="profile.infor.introduce">{{ profile.infor.introduce }}</p>
                     </div>
                 </div>
             </div>
             <div class="profile_infor_right" v-if="store.is_login">
-                <button @click="unfollow" v-if="profile.follow_status">Unfollow</button>
-                <button @click="follow" v-else>Follow</button>
+                <button @click="unfollow" v-if="profile.follow_status" class="fs_15">Unfollow</button>
+                <button @click="follow" v-else class="fs_15">Follow</button>
             </div>
         </div>
 
         <div class="profile_video">
             <div class="profile_video_tag">
-                <div class="tag_item active_tag"  id="created" @click="profile.active_tab = 'video'">
-                    <p class="text normal_color">Create</p>
+                <div class="tag_item active_tag" id="created" @click="profile.active_tab = 'video'">
+                    <p class="text normal_color fs_15">Create</p>
                 </div>
             </div>
             <VideoListComponent :active="profile.active_tab" :username="route.params.username" />
         </div>
 
-        <div class="popup" v-if="store.msg_error || show_followed_popup || show_follower_popup || show_avatar_popup">
-            <div id="error-popup" v-if="store.msg_error">
-                <p>{{ store.msg_error }}</p>
-            </div>
-
+        <div class="popup" v-if="show_followed_popup || show_follower_popup || show_avatar_popup">
             <div class="popup_board" id="followed_popup" v-if="show_followed_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color">Followed</p>
+                <p class="text normal_color fs_17">Followed</p>
                 <div class="follow_board">
-                    <div class="follow_board_item" v-for="user in profile.followed">
+                    <div class="follow_board_item poiter" v-for="user in profile.followed">
                         <div class="follow_context">
                             <img class="profile_avatar_folllow" :src="store.domain + user.avatar">
-                            <p class="text normal_color">{{ user.full_name }}</p>
+                            <p class="text normal_color fs_15">{{ user.full_name }}</p>
                         </div>
                         <button>
-                            <router-link class="text normal_color"
+                            <router-link class="text normal_color fs_15"
                                 :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
                         </button>
                     </div>
                 </div>
             </div>
             <div class="popup_board" id="follower_popup" v-if="show_follower_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color">Follower</p>
+                <p class="text normal_color fs_17">Follower</p>
                 <div class="follow_board">
-                    <div class="follow_board_item" v-for="user in profile.follower">
+                    <div class="follow_board_item poiter" v-for="user in profile.follower">
                         <div class="follow_context">
                             <img class="profile_avatar_folllow" :src="store.domain + user.avatar">
-                            <p class="text normal_color">{{ user.full_name }}</p>
+                            <p class="text normal_color fs_15">{{ user.full_name }}</p>
                         </div>
                         <button>
-                            <router-link class="text normal_color"
+                            <router-link class="text normal_color fs_15"
                                 :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
                         </button>
                     </div>
@@ -323,15 +319,16 @@ const unfollow = () => {
 }
 
 .follow_board {
-    padding-top: 10px;
-    height: 400px;
+    height: 93%;
     overflow-y: scroll;
     display: flex;
     flex-direction: column;
+    margin-top: 10px;
 }
 
 .follow_board::-webkit-scrollbar {
-    width: 0.5rem;
+    width: 5px;
+    height: 5px;
 }
 
 .follow_board::-webkit-scrollbar-track {
@@ -340,7 +337,7 @@ const unfollow = () => {
 
 .follow_board::-webkit-scrollbar-thumb {
     background: var(--scroll_color);
-    border-radius: 0.3rem;
+    border-radius: 5px;
 }
 
 .follow_board_item {

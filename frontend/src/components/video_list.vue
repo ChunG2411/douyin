@@ -93,20 +93,20 @@ const scrollToElement = (element) => {
                 <video class="profile_video_card" :src="store.domain + video.video" />
                 <div class="card_content">
                     <div>
-                        <p class="normal_text normal_color text_over">{{ video.descrip.slice(0,15) }}...</p>
+                        <p class="normal_text normal_color fs_13">{{ video.descrip.slice(0,15) }}...</p>
                     </div>
                     <div class="card_content_action">
                         <div>
                             <font-awesome-icon :icon="['fas', 'heart']" class="icon white" />
-                            <p class="normal_text normal_color">{{ video.like_count }}</p>
+                            <p class="normal_text normal_color fs_13">{{ video.like_count }}</p>
                         </div>
                         <div>
                             <font-awesome-icon :icon="['fas', 'comment']" class="icon white" />
-                            <p class="normal_text normal_color">{{ video.comment_count }}</p>
+                            <p class="normal_text normal_color fs_13">{{ video.comment_count }}</p>
                         </div>
                         <div>
-                            <p class="normal_text normal_color">{{ video.save_count }}</p>
                             <font-awesome-icon :icon="['fas', 'star']" class="icon white" />
+                            <p class="normal_text normal_color fs_13">{{ video.save_count }}</p>
                         </div>
                     </div>
                 </div>
@@ -118,8 +118,10 @@ const scrollToElement = (element) => {
 <style>
 .video_list {
     overflow-y: scroll;
+    margin-top: 10px;
     height: 90%;
     width: 100%;
+    max-width: 850px;
     display: grid;
     grid-template-columns: repeat(auto-fit, 150px);
     padding: 5px 0 0 5px;
@@ -127,7 +129,8 @@ const scrollToElement = (element) => {
 }
 
 .video_list::-webkit-scrollbar {
-    width: 0.5rem;
+    width: 5px;
+    height: 5px;
 }
 
 .video_list::-webkit-scrollbar-track {
@@ -136,7 +139,7 @@ const scrollToElement = (element) => {
 
 .video_list::-webkit-scrollbar-thumb {
     background: var(--scroll_color);
-    border-radius: 0.3rem;
+    border-radius: 5px;
 }
 
 .video_card {
@@ -151,8 +154,8 @@ const scrollToElement = (element) => {
     position: absolute;
     bottom: 0;
     height: max-content;
-    width: 90%;
-    padding: 5px;
+    width: 88%;
+    padding: 5px 10px;
 }
 .card_content_action{
     display: flex;

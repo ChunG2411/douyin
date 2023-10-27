@@ -87,7 +87,7 @@ def get_videolist_of_music(request, pk):
             page = "0"
 
         music = Music.objects.get(id=pk)
-        videos = Video.objects.filter(music=music)[(int(page)*5):(int(page)+1)*5]   
+        videos = Video.objects.filter(music=music)[(int(page)*10):(int(page)+1)*10]   
         serializers = VideoSerializer(videos, many=True)
         return Response(response_success(serializers.data), status=200)
     except Exception as e:
@@ -200,9 +200,15 @@ def CommentView(request, pk):
         except:
             parent = None
 
-        comments = CommentVideo.objects.filter(video=video, parent=parent)[(int(page)*5):(int(page)+1)*5]
-        serializers = CommentVideoSerializer(
-            comments, many=True, context={'request': request})
+        all_comments = CommentVideo.objects.filter(video=video, parent=parent)
+        cur_page_comment = all_comments[(int(page)*10):(int(page)+1)*10]
+        next_page_comment = all_comments[((int(page)+1)*10):(int(page)+2)*10]
+
+        have_more = False
+        if len(next_page_comment)>0:
+            have_more = True
+
+        serializers = CommentVideoSerializer(cur_page_comment, many=True, context={'request': request, 'have_more': str(have_more)})
         return Response(response_success(serializers.data), status=200)
 
     except Exception as e:

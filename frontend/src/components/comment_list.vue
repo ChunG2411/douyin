@@ -2,7 +2,7 @@
 import { Store } from '../assets/store'
 import CommentItem from './comment_item.vue'
 
-import { ref, defineProps, watch, reactive } from 'vue'
+import { ref, defineProps, watch } from 'vue'
 import axios from 'axios'
 import { socket_noti } from '../function/socket.js'
 
@@ -124,30 +124,59 @@ window.addEventListener('scroll', loadMoreComment);
 
 <template>
     <div class="comment_list">
-        <div class="comment_list_item" v-on:scroll="loadMoreComment">
-            <div v-for="comment in comment_list" :key="comment.id">
+        <div class="comment_list_item">
+            <div v-for="(comment, index) in comment_list" :key="comment.id">
                 <CommentItem :data="comment" />
+                <p class="normal_text normal_color fs_11 poiter" v-if="index == comment_list.length-1 && comment.have_more=='True'" @click="loadMoreComment">Load more</p>
             </div>
         </div>
-
-
-        <div>
-            <form @submit.prevent="comment_video" v-if="store.is_login">
-                <span v-if="store.comment_tag.video_id == props.video_id">
-                    <small>to @{{ store.comment_tag.full_name }}</small>
-                    <label @click="remove_parent">remove</label>
-                </span>
-                <input type="text" v-model="comment_form">
-                <button type="submit">comment</button>
-            </form>
-        </div>
+        <form @submit.prevent="comment_video" v-if="store.is_login" class="comment_form">
+            <span v-if="store.comment_tag.video_id == props.video_id" class="display_flex gap5 align_center">
+                <p class="normal_text normal_color fs_13">to @{{ store.comment_tag.full_name }}</p>
+                <p class="button normal_text fs_13" @click="remove_parent">remove</p>
+            </span>
+            <input class="input" type="text" placeholder="Input comment ..." v-model="comment_form">
+        </form>
     </div>
 </template>
 
 <style>
+.comment_list {
+    height: 95%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
 .comment_list_item {
-    overflow-y: scroll;
-    min-height: max-content;
-    max-height: 300px;
+    overflow: hidden;
+    height: 85%;
+}
+.comment_list_item:hover {
+    overflow: auto;
+}
+
+.comment_list_item::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+.comment_list_item::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+.comment_list_item::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+.comment_list_item::-webkit-scrollbar-corner {
+   background: transparent;
+}
+
+.comment_form {
+    position: absolute;
+    bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 </style>

@@ -24,16 +24,6 @@ const show_search_popup = ref(false)
 const show_login_popup = ref(false)
 const show_noti_popup = ref(false)
 
-const have_new_noti = ref(false)
-const have_new_chat = reactive({
-    status: false,
-    text: '',
-    avatar: '',
-    name: ''
-})
-
-const socket_noti_data = ref(null)
-
 //socket
 connect_noti()
 connect_chat()
@@ -45,9 +35,8 @@ socket_noti.onmessage = function (e) {
         const decoded = jwt_decode(localStorage.getItem('token'))
 
         if (data.type == "noti" && data.data) {
-            socket_noti_data.value = data.data
-            if (decoded.user_id == socket_noti_data.value.user) {
-                have_new_noti.value = true
+            if (decoded.user_id == data.data.user) {
+                store.noti = data.data
             }
         }
     }
@@ -59,10 +48,7 @@ socket_chat.onmessage = function (e) {
 
         if (data.type == "chat" && data.data) {
             if (data.data.member.includes(localStorage.getItem('username')) && data.data.sender != localStorage.getItem('username')) {
-                have_new_chat.status = true
-                have_new_chat.text = data.data.text
-                have_new_chat.avatar = data.data.receiver.avatar
-                have_new_chat.name = data.data.receiver.name
+                store.chat = data.data
             }
         }
     }
@@ -181,8 +167,6 @@ const logout = () => {
 const close_popup = [() => {
     show_login_popup.value = false
     show_noti_popup.value = false
-    have_new_noti.value = false
-    have_new_chat.status = false
 }]
 
 const handleClickSearch = (text) => {
@@ -213,12 +197,12 @@ const redirectSearch = () => {
             <div class="search_popup" v-show="show_search_popup">
                 <div id="suggest" v-if="search.context">
                     <router-link :to="{ name: 'search', params: { text: suggest } }" v-for="suggest in search.suggest"
-                        @click="handleClickSearch(suggest)" class="normal_text normal_color search_popup_item">{{ suggest }}
+                        @click="handleClickSearch(suggest)" class="normal_text normal_color fs_14 search_popup_item">{{ suggest }}
                     </router-link>
                 </div>
                 <div id="recent" v-else>
                     <router-link :to="{ name: 'search', params: { text: recent } }" v-for="recent in search.recent"
-                        @click="handleClickSearch(recent)" class="normal_text normal_color search_popup_item">{{ recent }}
+                        @click="handleClickSearch(recent)" class="normal_text normal_color fs_14 search_popup_item">{{ recent }}
                     </router-link>
                 </div>
             </div>
@@ -228,17 +212,17 @@ const redirectSearch = () => {
             <div class="action" v-if="store.is_login">
                 <div class="action_item" @click="show_noti_popup = true">
                     <font-awesome-icon :icon="['fas', 'bell']" class="icon white" />
-                    <p class="text normal_color">Noti</p>
+                    <p class="text normal_color fs_14">Noti</p>
                 </div>
 
                 <router-link to="/chat" class="action_item no_decor">
                     <font-awesome-icon :icon="['fas', 'message']" class="icon white" />
-                    <p class="text normal_color">Chat</p>
+                    <p class="text normal_color fs_14">Chat</p>
                 </router-link>
 
                 <router-link to="/creator" class="action_item no_decor">
                     <font-awesome-icon :icon="['fas', 'plus']" class="icon white" />
-                    <p class="text normal_color">Creator</p>
+                    <p class="text normal_color fs_14">Creator</p>
                 </router-link>
 
                 <div class="action_item" id="action_item_hover">
@@ -248,48 +232,30 @@ const redirectSearch = () => {
                 <div class="action_item_popup">
                     <router-link to="/profile/self" class="action_item_popup_options no_decor">
                         <font-awesome-icon :icon="['fas', 'user']" class="icon white" />
-                        <p class="text normal_color">Profile</p>
+                        <p class="text normal_color fs_14">Profile</p>
                     </router-link>
                     <div class="action_item_popup_options">
                         <font-awesome-icon :icon="['fas', 'gear']" class="icon white" />
-                        <p class="text normal_color">Setup</p>
+                        <p class="text normal_color fs_14">Setup</p>
                     </div>
                     <div @click="logout" class="action_item_popup_options">
                         <font-awesome-icon :icon="['fas', 'arrow-right-from-bracket']" class="icon white" />
-                        <p class="text normal_color">Logout</p>
+                        <p class="text normal_color fs_14">Logout</p>
                     </div>
                 </div>
             </div>
 
             <div class="action_item" v-else>
-                <p @click="show_login_popup = true" class="text normal_color">Login</p>
+                <p @click="show_login_popup = true" class="text normal_color fs_14">Login</p>
             </div>
         </div>
 
-        <div class="popup" v-if="show_login_popup || show_noti_popup || have_new_noti || have_new_chat.status">
+        <div class="popup" v-if="show_login_popup || show_noti_popup">
             <div class="popup_board" v-if="show_login_popup">
                 <AuthenComponent v-on-click-outside="close_popup" />
             </div>
             <div class="popup_board" v-if="show_noti_popup">
                 <Notification v-on-click-outside="close_popup" />
-            </div>
-            <div v-if="have_new_noti" v-on-click-outside="close_popup">
-                <p v-if="socket_noti_data.user_interact.split(',').length - 1 > 0">
-                    {{ socket_noti_data.context }} and {{ socket_noti_data.user_interact.split(",").length - 1 }}
-                    other people
-                </p>
-                <p v-else>{{ socket_noti_data.context }}</p>
-
-                <p v-if="socket_noti_data.type == '1'">liked your video</p>
-                <p v-else-if="socket_noti_data.type == '2'">commented your video</p>
-                <p v-else-if="socket_noti_data.type == '3'">liked your comment</p>
-                <p v-else-if="socket_noti_data.type == '4'">commented your comment</p>
-                <p v-else-if="socket_noti_data.type == '5'">followed you</p>
-            </div>
-            <div v-if="have_new_chat.status" v-on-click-outside="close_popup">
-                <img class="image_noti" :src="store.domain + have_new_chat.avatar">
-                <b>{{ have_new_chat.name }}</b>
-                <p>{{ have_new_chat.text }}</p>
             </div>
         </div>
 
@@ -381,7 +347,7 @@ const redirectSearch = () => {
 
 .action_item_popup {
     position: fixed;
-    top: 55px;
+    top: 50px;
     right: 5px;
     width: 180px;
     height: max-content;

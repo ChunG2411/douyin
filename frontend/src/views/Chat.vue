@@ -2,7 +2,7 @@
 import { Store } from '../assets/store'
 import { socket_message, socket_chat } from '../function/socket.js'
 
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import axios from 'axios'
 import jwt_decode from "jwt-decode"
 
@@ -13,7 +13,7 @@ const my_user = localStorage.getItem('username')
 
 const chat_list = ref([])
 const msg_list = ref([])
-const msg_page = ref('1')
+const msg_page = ref('0')
 const cur_chat = ref(null)
 const member_list = ref([])
 
@@ -46,6 +46,15 @@ const follower = ref([])
 const add_member_list = ref([])
 
 
+// scroll
+const board_list_msg = ref(null)
+
+const scrollToEnd = () => {
+    setTimeout(() => {
+        board_list_msg.value.scrollTop = board_list_msg.value.scrollHeight;
+    }, 100)
+}
+
 // socket message
 const new_message = ref(null)
 
@@ -58,6 +67,7 @@ socket_message.onmessage = function (e) {
                 if (data.data.sender != decoded.user_id) {
                     new_message.value = data.data
                     msg_list.value.push(new_message.value)
+                    scrollToEnd()
                 }
             }
             else {
@@ -100,6 +110,7 @@ const api_get_chat_detail = (id) => {
         .then(response => {
             for (let i = 0; i < response.data.data.length; i++) {
                 msg_list.value.unshift(response.data.data[i])
+                scrollToEnd()
             }
         })
         .catch(error => {
@@ -113,6 +124,7 @@ const api_get_chat_detail = (id) => {
 }
 
 const get_chat_detail = (obj) => {
+    msg_page.value = '0'
     api_get_chat_detail(obj.id)
     cur_chat.value = obj
 }
@@ -150,6 +162,7 @@ const submit_form = (id) => {
             form_msg.text = ''
             form_msg.media = ''
             preview_image_upload.value = null
+            scrollToEnd()
         })
         .catch(error => {
             try {
@@ -385,126 +398,183 @@ const submit_modify_form = () => {
         })
 }
 
+const handle_action_chat = () => {
+    const content_element = document.querySelector('.chat_right_content')
+    if (show_action_chat.value) {
+        show_action_chat.value = false
+        content_element.style.width = '100%'
+    }
+    else {
+        show_action_chat.value = true
+        content_element.style.width = '70%'
+    }
+}
+
 </script>
 
 <template>
     <div class="chat">
-        <div>
-            <div>
-                <button @click="add_new_chat">Add new chat</button>
-                <input type="text" placeholder="Search chat" v-model="search_chat.request" @input="get_search_chat">
-                <div>
-                    <div v-for="result in search_chat.result" @click="get_chat_detail(result)">
-                        <div>
-                            <img class="avatar_chat" :src="store.domain + result.avatar">
-                        </div>
-                        <div>
-                            <p>{{ result.name }}</p>
-                        </div>
+        <div class="chat_left">
+            <div class="display_flex gap5 align_center">
+                <button @click="add_new_chat">New</button>
+                <input class="input" type="text" placeholder="Enter chat name..." v-model="search_chat.request"
+                    @input="get_search_chat">
+                <div class="chat_search_board" v-if="search_chat.result.length > 0">
+                    <div class="chat_search_board_item" v-for="result in search_chat.result"
+                        @click="get_chat_detail(result)">
+                        <img class="chat_avatar" :src="store.domain + result.avatar">
+                        <p class="text normal_color fs_15">{{ result.name }}</p>
                     </div>
                 </div>
             </div>
-            <div v-for="chat in chat_list" :key="chat.id" @click="msg_list = []; get_chat_detail(chat)">
-                <div>
-                    <img class="avatar_chat" :src="store.domain + chat.avatar">
-                </div>
-                <div>
-                    <p>{{ chat.name }}</p>
-                    <small>{{ chat.last_message }}</small>
+            <div class="chat_left_list">
+                <div class="chat_left_list_item" v-for="chat in chat_list" :key="chat.id"
+                    @click="msg_list = []; get_chat_detail(chat)">
+                    <div>
+                        <img class="chat_avatar" :src="store.domain + chat.avatar">
+                    </div>
+                    <div>
+                        <p class="text normal_color fs_15">{{ chat.name }}</p>
+                        <p class="normal_text gray fs_13">{{ chat.last_message }}</p>
+                    </div>
                 </div>
             </div>
         </div>
-        <div>
-            <div v-if="cur_chat">
-                <div>
-                    <div>
-                        <img class="avatar_chat" :src="store.domain + cur_chat.avatar">
-                        <p>{{ cur_chat.name }}</p>
+
+        <div class="chat_right" v-if="cur_chat">
+            <div class="chat_right_content">
+                <div class="chat_right_content_top">
+                    <div class="display_flex align_center gap10">
+                        <img class="chat_avatar" :src="store.domain + cur_chat.avatar">
+                        <p class="text normal_color fs_15">{{ cur_chat.name }}</p>
                     </div>
                     <div>
-                        <button @click="show_action_chat = !show_action_chat">Detail</button>
+                        <button @click="handle_action_chat">Detail</button>
                     </div>
                 </div>
-                <div>
-                    <div>
-                        <div>
-                            <small @click="load_more_msg(cur_chat.id)">read more</small>
+                <div class="chat_right_content_bottom">
+                    <div class="chat_right_content_bottom_content" ref="board_list_msg">
+                        <div class="display_flex justify_center">
+                            <p class="normal_text normal_color fs_11 poiter" @click="load_more_msg(cur_chat.id)">
+                                Read more
+                            </p>
                         </div>
                         <div v-for="(msg, index) in msg_list">
-                            <div v-if="decoded.user_id == msg.sender" style="background-color: blue;">
-                                <div>
-                                    <p v-if="msg.context">{{ msg.context }}</p>
-                                    <img :src="store.domain + msg.media" v-if="msg.media">
+                            <div class="msg_right" v-if="decoded.user_id == msg.sender">
+                                <div class="msg_item">
+                                    <p class="normal_text normal_color fs_13" v-if="msg.context">{{ msg.context }}</p>
+                                    <div>
+                                        <img class="message_image" :src="store.domain + msg.media" v-if="msg.media">
+                                    </div>
                                 </div>
                             </div>
-                            <div v-else>
-                                <div>
-                                    <p v-if="msg.context">{{ msg.context }}</p>
-                                    <img :src="store.domain + msg.media" v-if="msg.media">
+                            <div class="msg_left" v-else>
+                                <div class="msg_item">
+                                    <p class="normal_text normal_color fs_13" v-if="msg.context">{{ msg.context }}</p>
+                                    <div>
+                                        <img class="message_image" :src="store.domain + msg.media" v-if="msg.media">
+                                    </div>
                                 </div>
                             </div>
+
                             <div v-if="msg.reader.length < cur_chat.member.length">
-                                <small>{{ msg.reader.length }} member readed</small>
+                                <p class="normal_text normal_color fs_11">{{ msg.reader.length }} member readed</p>
                             </div>
                             <div v-else-if="cur_chat.member.length == msg.reader.length && index == (msg_list.length - 1)">
-                                <small>{{ msg.reader.length }} member readed</small>
+                                <p class="normal_text normal_color fs_11">{{ msg.reader.length }} member readed</p>
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <form @submit.prevent="submit_form(cur_chat.id)">
-                            <input type="text" v-model="form_msg.text">
-                            <input type="file" accept="image/*" @change="upload_image" id="upload_image"
-                                style="display: none;">
-                            <label for="upload_image">upload</label>
+                    <form class="chat_right_content_bottom_form" @submit.prevent="submit_form(cur_chat.id)">
+                        <input type="file" accept="image/*" @change="upload_image" id="upload_image" style="display: none;">
+                        <label for="upload_image">
+                            <font-awesome-icon :icon="['fas', 'image']" class="icon_20 white" />
+                        </label>
+                        <input type="text" class="input" placeholder="Enter message..." v-model="form_msg.text">
 
-                            <div v-if="preview_image_upload">
-                                <img :src="preview_image_upload">
-                                <label @click="remove_form_media">Remove</label>
+                        <div class="chat_preveiw" v-if="preview_image_upload">
+                            <img class="chat_preveiw_image" :src="preview_image_upload">
+                            <div class="display_flex_column gap5">
+                                <label class="button fs_13" @click="remove_form_media">Remove</label>
+                                <label class="button fs_13" for="upload_image">Change</label>
                             </div>
-                            <button type="submit">Send</button>
-                        </form>
-                    </div>
+                        </div>
+                        <button type="submit">Send</button>
+                    </form>
                 </div>
             </div>
-            <div v-if="show_action_chat && cur_chat">
-                <div>
-                    <img class="avatar_chat" :src="store.domain + cur_chat.avatar">
-                    <p>{{ cur_chat.name }}</p>
+            <div class="chat_right_action" v-if="show_action_chat">
+                <div class="display_flex_column align_center gap10">
+                    <img class="chat_avatar" :src="store.domain + cur_chat.avatar">
+                    <p class="text normal_color fs_15">{{ cur_chat.name }}</p>
                 </div>
-                <div>
-                    <button @click="modify_chat(cur_chat)">Modify</button>
-                    <button @click="delete_chat(cur_chat.id)">Delete</button>
-                    <button @click="show_member_chat = true; show_member(cur_chat.id)">
-                        Member({{ cur_chat.member.length }})
-                    </button>
-                    <button @click="add_member_to_chat(cur_chat.id)">Add member to chat</button>
-                    <button @click="remove_member_to_chat(cur_chat.id)">Remove member to chat</button>
+                <div class="chat_right_action_item">
+                    <div class="display_flex gap10 align_center" v-if="cur_chat.type != 'single'">
+                        <font-awesome-icon :icon="['fas', 'pen-to-square']" class="icon_15 white" />
+                        <p class="normal_text normal_color fs_15" @click="modify_chat(cur_chat)">Modify</p>
+                    </div>
+                    <div class="display_flex gap10 align_center">
+                        <font-awesome-icon :icon="['fas', 'trash']" class="icon white" />
+                        <p class="normal_text normal_color fs_15" @click="delete_chat(cur_chat.id)">Delete</p>
+
+                    </div>
+                    <div class="display_flex gap10 align_center">
+                        <font-awesome-icon :icon="['fas', 'user-group']" class="icon white" />
+                        <p class="normal_text normal_color fs_15"
+                            @click="show_member_chat = true; show_member(cur_chat.id)">
+                            Member</p>
+                    </div>
+                    <div class="display_flex gap10 align_center" v-if="cur_chat.type != 'single'">
+                        <font-awesome-icon :icon="['fas', 'user-plus']" class="icon white" />
+                        <p class="normal_text normal_color fs_15" @click="add_member_to_chat(cur_chat.id)">Add member
+                        </p>
+
+                    </div>
+                    <div class="display_flex gap10 align_center" v-if="cur_chat.type != 'single'">
+                        <font-awesome-icon :icon="['fas', 'user-minus']" class="icon white" />
+                        <p class="normal_text normal_color fs_15" @click="remove_member_to_chat(cur_chat.id)">Remove
+                            member
+                        </p>
+
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="popup"
             v-if="show_add_chat_popup || show_member_chat || show_add_member_popup || show_remove_member_popup || show_modify_chat">
-            <div v-if="show_add_chat_popup">
-                <div>
-                    <b>member: </b>
-                    <div v-for="(member, index) in member_chat" :key="index">
-                        <p>{{ member.full_name }}</p>
-                        <button @click="member_chat.splice(index, 1)">remove</button>
+            <div class="popup_board" v-if="show_add_chat_popup">
+                <p class="text normal_color fs_17">Create new chat</p>
+                <div class="pd_t_10 pd_l_10 pd_r_10">
+                    <p class="text normal_color fs_15 pd_b_5">Select member: </p>
+                    <div class="chat_popup_user_board">
+                        <div class="chat_popup_user_board_user" v-for="(member, index) in member_chat" :key="index">
+                            <div class="display_flex gap15 align_center">
+                                <img class="chat_avatar" :src="store.domain + member.avatar">
+                                <p class="text normal_color fs_15">{{ member.full_name }}</p>
+                            </div>
+                            <button @click="member_chat.splice(index, 1)">Remove</button>
+                        </div>
+                    </div>
+
+                    <p class="text normal)color fs_15 pd_b_5 pd_t_5">List follower:</p>
+                    <div class="chat_popup_user_board">
+                        <div class="chat_popup_user_board_user" v-for="user in follower">
+                            <div class="display_flex gap15 align_center">
+                                <img class="chat_avatar" :src="store.domain + user.avatar">
+                            <p class="text normal_color fs_15">{{ user.full_name }}</p>
+                            </div>
+                            <button @click="member_chat.push(user)">Add</button>
+                        </div>
+                    </div>
+                    <div class="display_flex align_center gap10 justify_center">
+                        <button @click="show_add_chat_popup = false">close</button>
+                        <button @click="submit_new_chat">Create</button>
                     </div>
                 </div>
-                <div>
-                    <b>list follower:</b>
-                    <div v-for="user in follower" @click="member_chat.push(user)">
-                        <p>{{ user.full_name }}</p>
-                    </div>
-                </div>
-                <button @click="show_add_chat_popup = false">close</button>
-                <button @click="submit_new_chat">Create</button>
             </div>
 
-            <div v-if="show_member_chat">
+            <div class="popup_board" v-if="show_member_chat">
                 <b>member:</b>
                 <div>
                     <div v-for="member in member_list" :key="member.id">
@@ -520,7 +590,7 @@ const submit_modify_form = () => {
                 <button @click="show_member_chat = false; member_list = []">close</button>
             </div>
 
-            <div v-if="show_add_member_popup">
+            <div class="popup_board" v-if="show_add_member_popup">
                 <b>new member:</b>
                 <div>
                     <div v-for="(member, index) in add_member_list" @click="add_member_list.splice(index, 1)">
@@ -537,7 +607,7 @@ const submit_modify_form = () => {
                 <button @click="submit_add_new_member">Create</button>
             </div>
 
-            <div v-if="show_remove_member_popup">
+            <div class="popup_board" v-if="show_remove_member_popup">
                 <b>member:</b>
                 <div>
                     <div v-for="(member, index) in member_list" :key="index">
@@ -550,7 +620,7 @@ const submit_modify_form = () => {
                 <button @click="show_remove_member_popup = false">close</button>
             </div>
 
-            <div v-if="show_modify_chat">
+            <div class="popup_board" v-if="show_modify_chat">
                 <form @submit.prevent="submit_modify_form">
                     <div>
                         <p>name</p>
@@ -572,3 +642,294 @@ const submit_modify_form = () => {
         </div>
     </div>
 </template>
+
+<style>
+.chat {
+    width: 90%;
+    height: 90%;
+    display: flex;
+    gap: 15px;
+    padding: 10px;
+}
+
+/* ---------------------------------left-------------------------------------- */
+.chat_left {
+    width: 30%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+}
+
+/* --------------------top------------------------- */
+.chat_search_board {
+    position: absolute;
+    background: var(--background_popup_color);
+    box-shadow: 0 0 2px var(--boder_color);
+    top: 30px;
+    left: 70px;
+    border-radius: 5px;
+    padding: 5px;
+    width: max-content;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 20;
+}
+
+.chat_search_board::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.chat_search_board::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.chat_search_board::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+
+.chat_search_board_item {
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat_search_board_item:hover {
+    background: var(--hover_color);
+    cursor: pointer;
+}
+
+/* --------------------bot--------------------- */
+.chat_left_list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    width: 97%;
+    height: 93%;
+}
+
+.chat_left_list::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.chat_left_list::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.chat_left_list::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+
+.chat_left_list_item {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    align-items: center;
+    cursor: pointer;
+}
+
+.chat_left_list_item:hover {
+    background: var(--hover_color);
+}
+
+
+/* ---------------------------------right----------------------------------- */
+.chat_right {
+    width: 70%;
+    height: 100%;
+    display: flex;
+    gap: 10px;
+    position: relative;
+}
+
+/* ---------------------action----------------------- */
+.chat_right_action {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat_right_action_item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: left;
+    width: 100%;
+}
+
+.chat_right_action_item div {
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.chat_right_action_item div:hover {
+    background: var(--hover_color);
+}
+
+/* --------------------content---------------------- */
+.chat_right_content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+}
+
+.chat_right_content_top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--boder_color);
+}
+
+/* ----------------------bottom------------------------ */
+.chat_right_content_bottom {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+}
+
+/* ------------content------------ */
+.chat_right_content_bottom_content {
+    width: 100%;
+    height: 95%;
+    overflow-y: auto;
+    gap: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat_right_content_bottom_content::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.chat_right_content_bottom_content::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.chat_right_content_bottom_content::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+
+.msg_left {
+    width: 95%;
+    display: flex;
+    justify-content: left;
+}
+
+.msg_left .msg_item {
+    background: var(--background_popup_color);
+    padding: 5px 10px;
+    max-width: 55%;
+    width: max-content;
+    border-radius: 10px;
+    box-shadow: 0 0 1px var(--boder_color);
+    align-items: left;
+}
+
+.msg_left .msg_item div {
+    overflow: hidden;
+}
+
+.msg_right {
+    width: 98%;
+    display: flex;
+    justify-content: right;
+}
+
+.msg_right .msg_item {
+    background: var(--background_popup_color);
+    border-radius: 10px;
+    box-shadow: 0 0 1px var(--boder_color);
+    max-width: 55%;
+    width: max-content;
+    padding: 5px 10px;
+}
+
+.msg_right .msg_item div {
+    overflow: hidden;
+}
+
+/* --------------form------------ */
+.chat_right_content_bottom_form {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 10px 0;
+    width: 100%;
+    border-top: 1px solid var(--boder_color);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    position: relative;
+}
+
+.chat_preveiw {
+    position: absolute;
+    bottom: 50px;
+    background: var(--background_popup_color);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 2px var(--boder_color);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* -----------------------------------------------------popup----------------------------------------- */
+.chat_popup_user_board{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    height: 200px;
+    padding: 5px;
+}
+.chat_popup_user_board::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.chat_popup_user_board::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.chat_popup_user_board::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+
+.chat_popup_user_board_user {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.chat_popup_user_board_user:hover {
+    background: var(--hover_color);
+}
+</style>

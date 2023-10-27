@@ -41,10 +41,36 @@ class NotiSerializer(serializers.ModelSerializer):
 class ChatSerializer(serializers.ModelSerializer):
     member = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = Chat
         fields = "__all__"
+
+    def get_name(self, obj):
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+
+        handle_name = obj.name
+        if obj.type == '1':
+            for i in obj.member.all():
+                if i.username != user.username:
+                    handle_name = i.get_full_name
+        return handle_name
+
+    def get_avatar(self, obj):
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+
+        handle_avatar = obj.avatar.url
+        if obj.type == '1':
+            for i in obj.member.all():
+                if i.username != user.username:
+                    handle_avatar = i.avatar.url
+        return handle_avatar
 
     def get_member(self, obj):
         list_member = []
@@ -101,6 +127,8 @@ class ChatSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    have_more = serializers.SerializerMethodField
+
     class Meta:
         model = Message
         fields = "__all__"
@@ -129,4 +157,7 @@ class MessageSerializer(serializers.ModelSerializer):
         chat.save()
 
         return message
+    
+    def get_have_more(self, obj):
+        return str(self.context.get("have_more"))
     

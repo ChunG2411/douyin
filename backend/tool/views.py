@@ -30,8 +30,10 @@ def SearchVideo(request):
             searchs.last().delete()
         SearchRecent.objects.create(user=request.user, text=text)
 
-    videos = Video.objects.filter(descrip__contains=text)[(int(page)*5):(int(page)+1)*5]
-    serializers = VideoSerializer(videos, many=True, context={'request': request})
+    videos = Video.objects.filter(descrip__contains=text)[
+        (int(page)*5):(int(page)+1)*5]
+    serializers = VideoSerializer(
+        videos, many=True, context={'request': request})
 
     return Response(response_success(serializers.data), status=200)
 
@@ -51,7 +53,7 @@ def SearchUser(request):
         SearchRecent.objects.create(user=request.user, text=text)
 
     users = User.objects.exclude(id=request.user.id).filter(Q(first_name__contains=text) | Q(
-        last_name__contains=text) | Q(username__contains=text))[(int(page)*5):(int(page)+1)*5]
+        last_name__contains=text) | Q(username__contains=text))[(int(page)*10):(int(page)+1)*10]
     serializers = UserDetailSerializer(users, many=True)
 
     return Response(response_success(serializers.data), status=200)
@@ -77,8 +79,10 @@ def SuggestSearch(request):
 @permission_classes([permissions.IsAuthenticated])
 def SearchChat(request):
     text = request.query_params['text']
-    chats = Chat.objects.filter(name__contains=text)
-    serializers = ChatSerializer(chats, many=True)
+    chats = Chat.objects.filter(
+        member__id=request.user.id, name__contains=text)
+    serializers = ChatSerializer(
+        chats, many=True, context={'request': request})
     return Response(response_success(serializers.data), status=200)
 
 
@@ -89,7 +93,7 @@ def SearchMessage(request, pk):
     try:
         chat = Chat.objects.get(id=pk)
         message = Message.objects.filter(receiver=chat, context__contains=text)
-        serializers = MessageSerializer(message, many=True)
+        serializers = MessageSerializer(message, many=True, context={'have_more': False})
         return Response(response_success(serializers.data), status=200)
     except Exception as e:
         return Response(response_error(str(e)), status=400)
@@ -102,7 +106,8 @@ def NotiView(request):
     if not page:
         page = "0"
 
-    noti = Noti.objects.filter(user=request.user)[(int(page)*5):(int(page)+1)*5]
+    noti = Noti.objects.filter(user=request.user)[
+        (int(page)*5):(int(page)+1)*5]
     serializer = NotiSerializer(noti, many=True)
     ser_copy = serializer.data
 
@@ -132,7 +137,7 @@ class ChatView(APIView):
 
     def get(self, request):
         chats = self.queryset.filter(member__id=request.user.id)
-        return Response(response_success(self.serializer_class(chats, many=True).data), status=200)
+        return Response(response_success(self.serializer_class(chats, many=True,  context={'request': request}).data), status=200)
 
     def delete(self, request):
         chat_id = request.GET.get('id')
@@ -171,7 +176,7 @@ class ChatView(APIView):
             if avatar:
                 chat.avatar = avatar
             chat.save()
-            serializer = ChatSerializer(chat)
+            serializer = ChatSerializer(chat, context={'request': request})
             return Response(response_success(serializer.data), status=201)
         except Exception as e:
             return Response(response_error(str(e)), status=400)
@@ -233,14 +238,22 @@ class MessageView(APIView):
     def get(self, request, pk):
         page = request.GET.get('page')
         if not page:
-            page = "1"
+            page = "0"
         try:
             chat = Chat.objects.get(id=pk, member__id=request.user.id)
             message = self.queryset.filter(receiver=chat)[
-                ((int(page)-1)*20):(int(page)*20)]
+                (int(page)*20):((int(page)+1)*20)]
+            message_next = self.queryset.filter(receiver=chat)[
+                ((int(page)+1)*20):((int(page)+2)*20)]
+
+            have_more = False
+            if len(message_next) > 0:
+                have_more = True
+
             for i in message:
                 i.reader.add(request.user)
-            serializer = self.serializer_class(message, many=True)
+
+            serializer = self.serializer_class(message, many=True, context={'have_more': have_more})
             return Response(response_success(serializer.data), status=200)
         except Exception as e:
             return Response(response_error(str(e)), status=400)
@@ -259,7 +272,7 @@ class MessageView(APIView):
         request_copy['sender'] = request.user.id
         request_copy['receiver'] = pk
 
-        serializer = MessageSerializer(data=request_copy)
+        serializer = MessageSerializer(data=request_copy, context={'have_more': False})
         if serializer.is_valid():
             serializer.save()
             return Response(response_success(serializer.data), status=201)

@@ -34,16 +34,20 @@ api_get_user_infor(props.username)
 <template>
     <div class="profile_short" v-if="profile">
         <div>
-            <router-link :to="{ name: 'guest_profile', params: { username: profile.username } }" v-if="my_user!=profile.username">
-                <b>{{ profile.full_name }}</b>
+            <router-link :to="{ name: 'guest_profile', params: { username: profile.username } }"
+                v-if="my_user != profile.username" class="text normal_color no_decor fs_17">@{{ profile.full_name }}
             </router-link>
-            <router-link to="/profile/self" v-else>
-                <b>{{ profile.full_name }}</b>
+            <router-link to="/profile/self" v-else class="text normal_color no_decor fs_17">
+                @{{ profile.full_name }}
             </router-link>
-            <small>follower: {{ profile.follower_count }}</small>
+            <p class="normal_text normal_color fs_13">Follower: {{ profile.follower_count }}</p>
         </div>
-        <div>
-            <VideoListComponent :active="'video'" :username="props.username" />
-        </div>
+        <VideoListComponent :active="'video'" :username="props.username" />
     </div>
 </template>
+
+<style>
+.profile_short{
+    height: 100%;
+}
+</style>

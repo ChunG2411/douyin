@@ -11,15 +11,16 @@ export const Store = defineStore('store', {
             avatar: null
         },
         is_login: (localStorage.getItem('token') === null) ? false : true,
+
         msg_error: null,
         msg_success: null,
+        noti: null,
+        chat: null,
 
         comment_tag: {
             video_id: '',
             comment_id: '',
             full_name: ''
-        },
-
-        chat_socket: {}
+        }
     })
 })

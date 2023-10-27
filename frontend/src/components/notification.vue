@@ -86,7 +86,8 @@ window.addEventListener('scroll', loadMoreNoti);
 
 <template>
     <div class="notification">
-        <div class="noti_list_item" v-if="noti_list.length > 0" v-on:scroll="loadMoreNoti">
+        <p class="text normal_color fs_17">Notification</p>
+        <div class="noti_list_item mg_t_5" v-if="noti_list.length > 0" v-on:scroll="loadMoreNoti">
             <div class="noti_item" v-for="noti in noti_list" :key="noti.id">
                 <div class="noti_item_left">
                     <div>
@@ -99,20 +100,20 @@ window.addEventListener('scroll', loadMoreNoti);
                         </router-link>
                     </div>
                     <div class="noti_content">
-                        <p class="normal_text normal_color" v-if="noti.user_interact.split(',').length - 1 > 0">
+                        <p class="text normal_color fs_15" v-if="noti.user_interact.split(',').length - 1 > 0">
                             {{ noti.context }} and {{ noti.user_interact.split(',').length - 1 }} other people
                         </p>
-                        <p class="normal_text normal_color" v-else>{{ noti.context }}</p>
+                        <p class="text normal_color fs_15" v-else>{{ noti.context }}</p>
 
-                        <p class="normal_text normal_color" v-if="noti.type == 'like_video'">liked your video</p>
-                        <p class="normal_text normal_color" v-else-if="noti.type == 'comment_video'">commented your video</p>
-                        <p class="normal_text normal_color" v-else-if="noti.type == 'like_comment'">liked your comment</p>
-                        <p class="normal_text normal_color" v-else-if="noti.type == 'comment_comment'">commented your comment</p>
-                        <p class="normal_text normal_color" v-else-if="noti.type == 'follow'">followed you</p>
+                        <p class="normal_text normal_color fs_15" v-if="noti.type == 'like_video'">liked your video</p>
+                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'comment_video'">commented your video</p>
+                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'like_comment'">liked your comment</p>
+                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'comment_comment'">commented your comment</p>
+                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'follow'">followed you</p>
                     </div>
                 </div>
                 <div class="noti_item_right">
-                    <button @click="delete_noti(noti.id)">Delete</button>
+                    <button @click="delete_noti(noti.id)" class="fs_13">Delete</button>
                 </div>
             </div>
         </div>
@@ -124,18 +125,19 @@ window.addEventListener('scroll', loadMoreNoti);
 
 <style>
 .notification {
-    height: 500px;
+    height: 100%;
     background: transparent;
 }
 
 .noti_list_item {
     overflow-y: scroll;
     min-height: max-content;
-    height: 500px;
+    height: 470px;
 }
 
 .noti_list_item::-webkit-scrollbar {
-    width: 0.5rem;
+    width: 5px;
+    height: 5px;
 }
 
 .noti_list_item::-webkit-scrollbar-track {
@@ -144,14 +146,14 @@ window.addEventListener('scroll', loadMoreNoti);
 
 .noti_list_item::-webkit-scrollbar-thumb {
     background: var(--scroll_color);
-    border-radius: 0.3rem;
+    border-radius: 5px;
 }
 
 .noti_item {
     display: flex;
-    width: 97%;
+    width: 95%;
     justify-content: space-between;
-    padding: 5px;
+    padding: 5px 10px;
     align-items: center;
     border-radius: 5px;
 }

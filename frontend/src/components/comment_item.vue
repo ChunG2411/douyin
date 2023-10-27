@@ -149,49 +149,63 @@ window.addEventListener('scroll', loadMoreComment_child);
         <div>
             <router-link :to="{ name: 'guest_profile', params: { username: props.data.user_infor.username } }"
                 v-if="my_user != props.data.user_infor.username">
-                <img class="profile_avatar_icon" :src="store.domain + props.data.user_infor.avatar">
+                <img class="profile_avatar_video" :src="store.domain + props.data.user_infor.avatar">
             </router-link>
             <router-link to="/profile/self" v-else>
-                <img class="profile_avatar_icon" :src="store.domain + props.data.user_infor.avatar">
+                <img class="profile_avatar_video" :src="store.domain + props.data.user_infor.avatar">
             </router-link>
         </div>
-        <div>
+
+        <div class="comment_content">
             <div>
                 <router-link :to="{ name: 'guest_profile', params: { username: props.data.user_infor.username } }"
-                    v-if="my_user != props.data.user_infor.username">
-                    <p>{{ props.data.user_infor.full_name }}</p>
+                    v-if="my_user != props.data.user_infor.username" class="text normal_color fs_15">
+                    {{ props.data.user_infor.full_name }}
                 </router-link>
-                <router-link to="/profile/self" v-else>
-                    <p>{{ props.data.user_infor.full_name }}</p>
+                <router-link to="/profile/self" v-else class="text normal_color fs_15">
+                    {{ props.data.user_infor.full_name }}
                 </router-link>
-
-                <p>{{ props.data.context }}</p>
-                <small>{{ props.data.create_time }}</small>
+                <p class="normal_text gray fs_15">{{ props.data.context }}</p>
+                <p class="normal_text gray fs_11">{{ props.data.create_time }}</p>
             </div>
-            <div>
-                <button @click="like_comment" v-if="props.data.liked">liked: {{ props.data.like_count }}</button>
-                <button @click="like_comment" v-else>like: {{ props.data.like_count }}</button>
 
-                <button @click="add_parent">comment</button>
-                <button @click="get_child_comment" v-if="props.data.child_count > 0">
-                    show more({{ props.data.child_count }})
-                </button>
+            <div class="display_flex justify_space align_center mg_t_5">
+                <div @click="like_comment" class="display_flex align_center gap5 poiter">
+                    <font-awesome-icon :icon="['fas', 'heart']" class="icon15 red" v-if="props.data.liked" />
+                    <font-awesome-icon :icon="['fas', 'heart']" class="icon gray" v-else />
+                    <p class="normal_text gray fs_13">{{ props.data.like_count }}</p>
+                </div>
 
-                <button @click="delete_comment" v-if="my_user == props.data.user_infor.username">delete</button>
+                <div @click="add_parent">
+                    <font-awesome-icon :icon="['fas', 'message']" class="icon_11 gray" />
+                </div>
+
+                <div @click="get_child_comment" v-if="props.data.child_count > 0"
+                    class="display_flex align_center gap5 poiter">
+                    <font-awesome-icon :icon="['fas', 'caret-down']" class="icon15 gray" />
+                    <p class="normal_text gray fs_13">{{ props.data.child_count }}</p>
+                </div>
+
+                <font-awesome-icon :icon="['fas', 'trash']" @click="delete_comment"
+                    v-if="my_user == props.data.user_infor.username" class="icon_11 gray" />
             </div>
-        </div>
-        <div class="comment_list_child" v-on:scroll="loadMoreComment_child">
-            <div v-for="child in child_comment" :key="child.id">
-                <CommentItemRecursive :data="child" />
+
+            <div class="comment_list_child">
+                <div v-for="(child, index) in child_comment" :key="child.id" class="mg_t_5">
+                    <CommentItemRecursive :data="child" />
+                    <p class="normal_text normal_color fs_11 poiter" v-if="index == child_comment.length-1 && child.have_more=='True'" @click="loadMoreComment_child">Load more</p>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <style>
-.comment_list_child {
-    overflow-y: scroll;
-    min-height: max-content;
-    max-height: 300px;
+.comment_item {
+    display: flex;
+    width: 100%;
+    min-width: 200px;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 </style>

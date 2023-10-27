@@ -98,6 +98,7 @@ class CommentVideoSerializer(serializers.ModelSerializer):
     like_count = serializers.SerializerMethodField()
     liked = serializers.SerializerMethodField()
     child_count = serializers.SerializerMethodField()
+    have_more = serializers.SerializerMethodField()
 
     class Meta:
         model = CommentVideo
@@ -129,6 +130,9 @@ class CommentVideoSerializer(serializers.ModelSerializer):
         child = CommentVideo.objects.filter(video=obj.video, parent=obj.id)
         return child.count()
 
+    def get_have_more(self, obj):
+        return self.context.get("have_more")
+    
 
 class SaveSerializer(serializers.ModelSerializer):
     class Meta:

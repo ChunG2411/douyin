@@ -81,18 +81,19 @@ const logup = () => {
 <template>
     <div class="authen">
         <div class="authen_item" v-if="show_logup">
-            <form class="authen_form" @submit.prevent="logup">
-                <input type="text" placeholder="Email" v-model="user_register.email">
-                <input type="text" placeholder="First name" v-model="user_register.first_name">
-                <input type="text" placeholder="Last name" v-model="user_register.last_name">
-                <select name="gender" v-model="user_register.gender">
+            <p class="text normal_color fs_17">Logup</p>
+            <form class="authen_form mg_t_5" @submit.prevent="logup">
+                <input class="input mg_b_5" type="text" placeholder="Email" v-model="user_register.email">
+                <input class="input mg_b_5" type="text" placeholder="First name" v-model="user_register.first_name">
+                <input class="input mg_b_5" type="text" placeholder="Last name" v-model="user_register.last_name">
+                <select class="select mg_b_5" name="gender" v-model="user_register.gender">
                     <option value="" disabled selected>Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                 </select>
-                <input type="password" placeholder="Password" v-model="user_register.password">
-                <button type="submit">Logup</button>
+                <input class="input mg_b_5" type="password" placeholder="Password" v-model="user_register.password">
+                <button type="submit" class="fs_13">Logup</button>
 
                 <div class="msg">
                     <p class="success_msg" v-if="store.msg_success">{{ store.msg_success }}</p>
@@ -101,15 +102,16 @@ const logup = () => {
             </form>
 
             <div class="action">
-                <button @click="show_logup = false">I have account</button>
+                <button @click="show_logup = false" class="fs_13">I have account</button>
             </div>
         </div>
 
         <div class="authen_item" v-else>
-            <form class="authen_form" @submit.prevent="login">
-                <input type="text" placeholder="Username or email" v-model="user_login.username_email">
-                <input type="password" placeholder="Password" v-model="user_login.password">
-                <button type="submit">Login</button>
+            <p class="text normal_color fs_17">Login</p>
+            <form class="authen_form mg_t_5" @submit.prevent="login">
+                <input class="input mg_b_5" type="text" placeholder="Username or email" v-model="user_login.username_email">
+                <input class="input mg_b_5" type="password" placeholder="Password" v-model="user_login.password">
+                <button type="submit" class="fs_13">Login</button>
 
                 <div class="msg">
                     <p class="error_msg" v-if="store.msg_error">{{ store.msg_error }}</p>
@@ -117,7 +119,7 @@ const logup = () => {
             </form>
 
             <div class="action">
-                <button @click="show_logup = true">Create new account</button>
+                <button @click="show_logup = true" class="fs_13">Create new account</button>
             </div>
         </div>
     </div>
@@ -125,7 +127,7 @@ const logup = () => {
 
 <style>
 .authen {
-    height: max-content;
+    height: 100%;
     background: transparent;
 }
 .authen_item{
@@ -139,25 +141,5 @@ const logup = () => {
     flex-direction: column;
     align-items: center;
     margin-bottom: 5px;
-}
-.authen_form input{
-    border: 1px solid var(--boder_color);
-    border-radius: 10px;
-    height: 20px;
-    width: 200px;
-    padding: 5px 10px;
-    background: var(--background_color);
-    color: var(--text_color);
-    margin-bottom: 5px;
-}
-.authen_form select{
-    background: var(--background_color);
-    height: 30px;
-    width: 100px;
-    margin-bottom: 5px;
-    color: var(--text_color);
-    border: 1px solid var(--boder_color);
-    border-radius: 10px;
-    padding: 5px 10px;
 }
 </style>

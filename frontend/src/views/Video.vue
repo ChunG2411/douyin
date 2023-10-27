@@ -3,6 +3,7 @@ import { Store } from '../assets/store'
 import AuthenComponent from '../components/authen.vue'
 import CommentComponent from '../components/comment_list.vue'
 import ProfileComponent from '../components/profile_short.vue'
+import VideoComponent from '../components/video_tag.vue'
 import { socket_noti } from '../function/socket.js'
 
 import { ref, reactive, watch } from 'vue'
@@ -44,6 +45,7 @@ const api_get_video = (id) => {
     axios.get(`${store.domain}/api/video/${id}`, header)
         .then(response => {
             video.value = response.data.data
+
         })
         .catch(error => {
             try {
@@ -126,70 +128,137 @@ const save_video = () => {
 
 const handle_show_component = (target) => {
     if (target == "comment") {
-        show_component.comment = true
+        show_component.comment = !show_component.comment
         show_component.profile = false
     }
     else {
         show_component.comment = false
-        show_component.profile = true
+        show_component.profile = !show_component.profile
     }
 }
-
 
 </script>
 
 <template>
     <div class="video_view" v-if="video">
-        <div>
-            <div>
-                <video class="video_view" :src="video.video" autoplay loop controls />
+        <div class="video_view_left">
+            <div class="video_view_video">
+                <VideoComponent :src="video.video"/>
             </div>
-            <div>
-                <div>
-                    <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar"
-                        @click="handle_show_component('profile')">
 
-                    <button @click="like_video" v-if="video.liked">liked: {{ video.like_count }}</button>
-                    <button @click="like_video" v-else>like: {{ video.like_count }}</button>
+            <div class="video_view_action">
+                <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar"
+                    @click="handle_show_component('profile')">
 
-                    <button @click="handle_show_component('comment')">{{ video.comment_count }}</button>
-
-                    <button @click="save_video" v-if="video.saved">saved: {{ video.save_count }}</button>
-                    <button @click="save_video" v-else>save: {{ video.save_count }}</button>
+                <div @click="like_video" class="display_flex_column align_center poiter">
+                    <font-awesome-icon :icon="['fas', 'heart']" class="icon_25 red" v-if="video.liked" />
+                    <font-awesome-icon :icon="['fas', 'heart']" class="icon_25 white" v-else />
+                    <p class="normal_text normal_color fs_15">{{ video.like_count }}</p>
                 </div>
+
+                <div @click="handle_show_component('comment')" class="display_flex_column align_center poiter">
+                    <font-awesome-icon :icon="['fas', 'message']" class="icon_20 white" />
+                    <p class="normal_text normal_color fs_15">{{ video.comment_count }}</p>
+                </div>
+
+                <div @click="save_video" class="display_flex_column align_center poiter">
+                    <font-awesome-icon :icon="['fas', 'star']" class="icon_20 yellow" v-if="video.saved" />
+                    <font-awesome-icon :icon="['fas', 'star']" class="icon_20 white" v-else />
+                    <p class="normal_text normal_color fs_15">{{ video.save_count }}</p>
+                </div>
+            </div>
+
+            <div class="video_view_infor">
                 <div>
-                    <router-link :to="{ name: 'music', params: { id: video.music } }" v-if="video.music">
-                        <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar">
+                    <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }"
+                        v-if="my_user != video.user_infor.username" class="text normal_color fs_17 no_decor shadow">
+                        {{ video.user_infor.full_name }}
                     </router-link>
-                    <img class="profile_avatar_icon" :src="store.domain + video.user_infor.avatar" v-else>
+                    <router-link to="/profile/self" v-else class="text normal_color fs_17 no_decor shadow">
+                        {{ video.user_infor.full_name }}
+                    </router-link>
+                    <p class="normal_text normal_color fs_15 shadow">{{ video.descrip }}</p>
                 </div>
-            </div>
-            <div>
-                <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }"
-                    v-if="my_user != video.user_infor.username">
-                    <p>{{ video.user_infor.full_name }}</p>
-                </router-link>
-                <router-link to="/profile/self" v-else>
-                    <p>{{ video.user_infor.full_name }}</p>
-                </router-link>
 
-                <p>{{ video.descrip }}</p>
+                <router-link :to="{ name: 'music', params: { id: video.music } }" v-if="video.music">
+                    <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar">
+                </router-link>
+                <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar" v-else>
             </div>
         </div>
 
-        <div v-if="show_component.comment || show_component.profile">
-            <div v-if="show_component.comment">
+        <div class="video_view_right" v-if="show_component.comment || show_component.profile">
+            <div class="right_board" v-if="show_component.comment">
+                <p class="text normal_color fs_17 pd_b_10">Comment</p>
                 <CommentComponent :video_id="video.id" />
-                <button @click="show_component.comment = false">close</button>
             </div>
-            <div v-if="show_component.profile">
+            <div class="right_board" v-if="show_component.profile">
                 <ProfileComponent :username="video.user_infor.username" />
-                <button @click="show_component.profile = false">close</button>
             </div>
         </div>
     </div>
 
     <div class="popup" v-if="show_login_popup">
-        <AuthenComponent v-on-click-outside="close_popup" />
+        <div class="popup_board" v-if="show_login_popup">
+            <AuthenComponent v-on-click-outside="close_popup" />
+        </div>
     </div>
 </template>
+
+<style>
+.video_view {
+    width: 90%;
+    height: 90%;
+    margin-left: 10px;
+    border-radius: 10px;
+    display: flex;
+    overflow: hidden;
+    background: var(--background_video);
+    box-shadow: 0 0 1px var(--boder_color);
+    justify-content: center;
+}
+
+.video_view_left {
+    width: auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.video_view_video{
+    height: 100%;
+    width: 100%;
+}
+
+.video_view_action {
+    position: absolute;
+    display: flex;
+    right: 10px;
+    bottom: 200px;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.video_view_infor {
+    position: absolute;
+    display: flex;
+    left: 10px;
+    bottom: 50px;
+    align-items: center;
+    justify-content: space-between;
+    width: 97%;
+}
+
+.video_view_right {
+    width: 40%;
+}
+
+.right_board {
+    width: 90%;
+    height: 97%;
+    overflow: hidden;
+    padding: 10px;
+}
+</style>

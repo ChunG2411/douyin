@@ -1,7 +1,7 @@
 <script setup>
 import { Store } from '../assets/store'
 
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import axios from 'axios'
 import { vOnClickOutside } from '@vueuse/components'
 
@@ -13,7 +13,7 @@ const upload_video_form = reactive({
     video: '',
     use_video_music: '1',
     music: '',
-    puclic: false
+    public: true
 })
 const upload_music_form = reactive({
     name: '',
@@ -269,7 +269,7 @@ const loadMoreVideo = (e) => {
 }
 const loadMoreMusic = (e) => {
     const { scrollTop, offsetHeight, scrollHeight } = e.target
-    if ((scrollTop + offsetHeight ) >= scrollHeight) {
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
         const header = {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
@@ -297,7 +297,7 @@ const loadMoreMusic = (e) => {
 }
 const loadMoreMusic_list = (e) => {
     const { scrollTop, offsetHeight, scrollHeight } = e.target
-    if ((scrollTop + offsetHeight ) >= scrollHeight) {
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
         const header = {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
@@ -328,107 +328,165 @@ window.addEventListener('scroll', loadMoreVideo)
 window.addEventListener('scroll', loadMoreMusic)
 window.addEventListener('scroll', loadMoreMusic_list)
 
+// active tag
+const creator_tag = ref(null)
+
+const removeActive_search = () => {
+    creator_tag.value.forEach(item => {
+        item.classList.remove('creator_active_tag')
+    })
+}
+
+onMounted(() => {
+    creator_tag.value = document.querySelectorAll('.creator_tag_item')
+    creator_tag.value.forEach(item => {
+        item.addEventListener('click', () => {
+            removeActive_search()
+            item.classList.add('creator_active_tag')
+        })
+    })
+})
+
 </script>
 
 <template>
     <div class="creator">
-        <div>
-            <p @click="active_tab('video')">create video</p>
-            <p @click="active_tab('music')">create music</p>
-            <p @click="active_tab('manager')">manager</p>
+        <div class="creator_tag">
+            <button class="creator_tag_item creator_active_tag" @click="active_tab('video')">create video</button>
+            <button class="creator_tag_item" @click="active_tab('music')">create music</button>
+            <button class="creator_tag_item" @click="active_tab('manager')">manager</button>
         </div>
-        <div>
-            <div v-if="active_bar.create_video">
-                <form @submit.prevent="submit_upload_video">
-                    <input type="text" v-model="upload_video_form.descrip">
-                    <input type="file" accept="video/*" @change="upload_video">
+        <div class="creator_board">
+            <div class="creator_board_item" id="creator_video" v-if="active_bar.create_video">
+                <div class="creator_board_item_left">
+                    <video class="video_preveiw_creator" v-if="preveiw.video" :src="preveiw.video" controls></video>
+                    <label class="text normal_color fs_15 poiter" v-else for="upload_video_creator">No video</label>
+                    <label class="change_video_upload button" for="upload_video_creator" v-if="preveiw.video">Change</label>
+                </div>
 
-                    <div v-if="preveiw.video">
-                        <video :src="preveiw.video" controls></video>
-                    </div>
+                <div class="creator_board_item_right">
+                    <form @submit.prevent="submit_upload_video">
+                        <p class="text normal_color fs_15">Description</p>
+                        <input type="text" class="input mg_l_10" placeholder="Enter description..."
+                            v-model="upload_video_form.descrip">
+                        <input type="file" id="upload_video_creator" accept="video/*" @change="upload_video"
+                            style="display: none;">
 
-                    <div v-if="upload_video_form.music">
-                        <img class="profile_avatar_music_list"
-                            :src="store.domain + upload_video_form.music.user_infor.avatar">
-                        <p>{{ upload_video_form.music.name }}</p>
-                        <label @click="remove_music">remove</label>
-                    </div>
-                    <div v-else>
-                        <label @click="get_music_list">music</label>
-                    </div>
-                    <input type="checkbox" v-model="upload_video_form.public">
+                        <p class="text normal_color fs_15">Music</p>
+                        <div v-if="upload_video_form.music" class="display_flex gap10 mg_l_10">
+                            <img class="profile_avatar_music_list"
+                                :src="store.domain + upload_video_form.music.user_infor.avatar">
+                            <div>
+                                <p class="normal_text normal_color fs_15">{{ upload_video_form.music.name }}</p>
+                                <p class="button fs_13 mg_t_10" @click="remove_music">Remove</p>
+                            </div>
+                        </div>
+                        <div v-else class="display_flex align_center gap10 mg_l_10">
+                            <p class="normal_text normal_color fs_13">Use music of this video</p>
+                            <p class="button fs_13" @click="get_music_list">Select other music</p>
+                        </div>
 
-                    <button type="submit">Submit</button>
-                </form>
+                        <div class="display_flex gap10 align_center">
+                            <p class="text normal_color fs_15">Public</p>
+                            <input type="checkbox" v-model="upload_video_form.public">
+                        </div>
+                        <button type="submit">Submit</button>
+                    </form>
 
-                <div class="music_list" v-if="show_music_list" v-on:scroll="loadMoreMusic_list" v-on-click-outside="close_popup">
-                    <div v-for="music in music_list" :key="music.id" @click="select_music(music)"
-                        v-if="music_list.length > 0">
-                        <img class="profile_avatar_music_list" :src="store.domain + music.user_infor.avatar">
-                        <p>{{ music.name }}</p>
-                        <small>{{ music.video_count }}</small>
-                    </div>
-                    <div v-else>
-                        <p>Don't have any music</p>
+                    <div class="music_list" v-if="show_music_list" v-on-click-outside="close_popup">
+                        <div class="music_list_board" v-if="music_list.length > 0" v-on:scroll="loadMoreMusic_list">
+                            <div v-for="music in music_list" :key="music.id" @click="select_music(music)"
+                                class="music_list_item">
+                                <img class="profile_avatar_music_list" :src="store.domain + music.user_infor.avatar">
+                                <div>
+                                    <p class="text normal_color fs_15">{{ music.name }}</p>
+                                    <p class="normal_text normal_color fs_13">{{ music.video_count }} used</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="music_list_board" v-else>
+                            <p class="text normal_color fs_15">Don't have any music</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div v-if="active_bar.create_music">
+            <div class="creator_board_item" id="creator_music" v-if="active_bar.create_music">
                 <form @submit.prevent="submit_upload_music">
-                    <input type="text" v-model="upload_music_form.name">
-                    <input type="file" accept="audio/mp3" @change="upload_music">
+                    <p class="text normal_color fs_15">Name</p>
+                    <input type="text" class="input mg_l_10" placeholder="Enter name of music..."
+                        v-model="upload_music_form.name">
+                    <input type="file" id="upload_music_creator" accept="audio/mp3" @change="upload_music"
+                        style="display: none;">
 
-                    <div v-if="preveiw.music">
+                    <p class="text normal_color fs_15">Music</p>
+                    <div v-if="preveiw.music" class="display_flex gap10 align_center mg_l_10">
                         <audio :src="preveiw.music" controls></audio>
+                        <p class="button fs_13">Change</p>
+                    </div>
+                    <div class="display_flex gap10 align_center mg_l_10" v-else>
+                        <p class="normal_text normal_color fs_13">No music preveiw</p>
+                        <label class="button fs_13" for="upload_music_creator">Upload</label>
                     </div>
 
                     <button type="submit">Submit</button>
                 </form>
             </div>
 
-            <div v-if="active_bar.manager">
-                <div>
-                    <b>video</b>
+            <div class="creator_board_item" id="creator_manager" v-if="active_bar.manager">
+                <div class="creator_manager_left">
+                    <p class="text normal_color fs_17">Video</p>
                     <div class="my_video" v-on:scroll="loadMoreVideo">
-                        <div v-for="video in my_video_list" :key="video.id">
+                        <div class="my_video_item" v-for="video in my_video_list" :key="video.id">
                             <video class="video_manager" :src="store.domain + video.video" />
-                            <p>{{ video.descrip }}</p>
-                            <div>
-                                <small v-if="video.public">Public</small>
-                                <small v-else>Private</small>
-                                <small>{{ video.create_time }}</small>
+                            <div class="display_flex_column gap5">
+                                <p class="normal_text normal_color fs_15">{{ video.descrip }}</p>
+                                <div class="display_flex align_center gap10">
+                                    <div class="display_flex align_center gap10 poiter">
+                                        <font-awesome-icon :icon="['fas', 'heart']" class="icon_15 white" />
+                                        <p class="normal_text normal_color fs_13">{{ video.like_count }}</p>
+                                    </div>
+
+                                    <div class="display_flex align_center gap10 poiter">
+                                        <font-awesome-icon :icon="['fas', 'message']" class="icon_15 white" />
+                                        <p class="normal_text normal_color fs_13">{{ video.comment_count }}</p>
+                                    </div>
+
+                                    <div class="display_flex align_center gap10 poiter">
+                                        <font-awesome-icon :icon="['fas', 'star']" class="icon_15 white" />
+                                        <p class="normal_text normal_color fs_13">{{ video.save_count }}</p>
+                                    </div>
+                                </div>
                             </div>
                             <div>
-                                <p>{{ video.like_count }}</p>
-                                <p>{{ video.comment_count }}</p>
-                                <p>{{ video.save_count }}</p>
+                                <p class="normal_text normal_color fs_13" v-if="video.public">Public</p>
+                                <p class="normal_text normal_color fs_13" v-else>Private</p>
+                                <p class="normal_text normal_color fs_13">{{ video.create_time }}</p>
                             </div>
-                            <div>
-                                <router-link :to="{ name: 'video', params: { id: video.id } }">
-                                    <button>View</button>
-                                </router-link>
+
+                            <div class="display_flex gap10 justify_right">
+                                <router-link class="button fs_13 no_decor"
+                                    :to="{ name: 'video', params: { id: video.id } }">View</router-link>
                                 <button @click="delete_video(video.id)">Delete</button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div>
-                    <b>music</b>
+                <div class="creator_manager_right">
+                    <p class="text normal_color fs_17">Music</p>
                     <div class="my_music" v-on:scroll="loadMoreMusic">
-                        <div v-for="music in my_music_list" :key="music.id">
+                        <div class="my_music_item" v-for="music in my_music_list" :key="music.id">
                             <img class="profile_avatar_music" :src="store.domain + music.user_infor.avatar">
-                            <p>{{ music.name }}</p>
                             <div>
-                                <small>{{ music.create_time }}</small>
+                                <p class="normal_text normal_color fs_15">{{ music.name }}</p>
                             </div>
                             <div>
-                                <p>{{ music.video_count }} used</p>
+                                <p class="normal_text normal_color fs_13">{{ music.video_count }} used</p>
+                                <p class="normal_text normal_color fs_13">{{ music.create_time }}</p>
                             </div>
-                            <div>
-                                <router-link :to="{ name: 'music', params: { id: music.id } }">
-                                    <button>View</button>
-                                </router-link>
+                            <div class="display_flex gap10 justify_right">
+                                <router-link class="button fs_13 no_decor"
+                                    :to="{ name: 'music', params: { id: music.id } }">View</router-link>
                                 <button @click="delete_music(music.id)">Delete</button>
                             </div>
                         </div>
@@ -440,23 +498,214 @@ window.addEventListener('scroll', loadMoreMusic_list)
 </template>
 
 <style>
-.my_music {
+.creator {
+    width: 87%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+}
+
+.creator_tag {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+}
+
+.creator_active_tag {
+    background: var(--hover_color);
+}
+
+.creator_board {
+    width: 100%;
+    height: 94%;
+    background: var(--background_video);
+    border-radius: 10px;
+}
+
+.creator_board_item {
+    padding: 10px;
+    width: 98%;
+    height: 97%;
+    position: relative;
+}
+
+#creator_video {
+    display: flex;
+    gap: 10px;
+}
+
+.creator_board_item_left {
+    width: 60%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: var(--hover_color);
+    border-radius: 10px;
+    position: relative;
+}
+
+.video_preveiw_creator {
+    width: 100%;
+}
+
+.change_video_upload {
+    position: absolute;
+    bottom: 10px;
+}
+
+.creator_board_item_right {
+    width: 40%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--hover_color);
+    border-radius: 10px;
+    position: relative;
+}
+
+.creator_board_item_right form {
+    padding: 20px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.music_list {
+    position: absolute;
+    background: var(--background_popup_color);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 2px var(--boder_color);
+    left: 10px;
+    top: 10px;
+    width: max-content;
+    height: 400px;
+}
+
+.music_list_board {
+    width: max-content;
+    height: 100%;
     overflow-y: scroll;
-    height: 500px;
-    min-height: max-content;
-    width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.music_list_board::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.music_list_board::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.music_list_board::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+
+.music_list_item {
+    border-radius: 5px;
+    display: flex;
+    gap: 10px;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.music_list_item:hover {
+    background: var(--hover_color);
+}
+
+#creator_music form {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#creator_manager {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.creator_manager_left {
+    height: 49%;
+    width: 100%;
+    overflow: hidden;
 }
 
 .my_video {
+    height: 90%;
     overflow-y: scroll;
-    height: 500px;
-    min-height: max-content;
-    width: 500px;
 }
-.music_list{
+
+.my_video::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.my_video::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.my_video::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+
+.my_video_item {
+    display: grid;
+    grid-template-columns: 100px 200px 200px auto;
+    border-radius: 10px;
+    padding: 10px;
+    align-items: center;
+    gap: 50px;
+}
+
+.my_video_item:hover {
+    background: var(--hover_color);
+}
+
+
+.creator_manager_right {
+    width: 100%;
+    height: 49%;
+    overflow: hidden;
+}
+
+.my_music {
+    height: 93%;
     overflow-y: scroll;
-    height: 400px;
-    min-height: max-content;
-    width: 400px;
 }
-</style>
+
+.my_music::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.my_music::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.my_music::-webkit-scrollbar-thumb {
+    background: var(--scroll_color);
+    border-radius: 5px;
+}
+
+.my_music_item {
+    display: grid;
+    grid-template-columns: 100px 200px 200px auto;
+    border-radius: 10px;
+    padding: 10px;
+    align-items: center;
+    gap: 50px;
+}
+
+.my_music_item:hover {
+    background: var(--hover_color);
+}</style>
