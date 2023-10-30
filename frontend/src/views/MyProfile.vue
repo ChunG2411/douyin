@@ -228,7 +228,10 @@ onMounted(() => {
                 </div>
             </div>
             <div class="profile_infor_right">
-                <button @click="show_modify_popup = true" class="fs_15">Modify</button>
+                <button @click="show_modify_popup = true" class="display_flex gap10 align_center">
+                    <font-awesome-icon :icon="['fas', 'pen']" class="icon white"/>
+                    <p class="normal_text normal_colo fs_15">Modify</p>
+                </button>
             </div>
         </div>
 

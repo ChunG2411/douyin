@@ -93,17 +93,17 @@ const logup = () => {
                     <option value="Other">Other</option>
                 </select>
                 <input class="input mg_b_5" type="password" placeholder="Password" v-model="user_register.password">
-                <button type="submit" class="fs_13">Logup</button>
 
                 <div class="msg">
                     <p class="success_msg" v-if="store.msg_success">{{ store.msg_success }}</p>
                     <p class="error_msg" v-if="store.msg_error">{{ store.msg_error }}</p>
                 </div>
-            </form>
 
-            <div class="action">
-                <button @click="show_logup = false" class="fs_13">I have account</button>
-            </div>
+                <div class="display_flex_column align_center gap5 mg_t_10">
+                    <button type="submit" class="fs_15">Logup</button>
+                    <label class="button fs_15" @click="show_logup = false">I have account</label>
+                </div>
+            </form>
         </div>
 
         <div class="authen_item" v-else>
@@ -111,32 +111,32 @@ const logup = () => {
             <form class="authen_form mg_t_5" @submit.prevent="login">
                 <input class="input mg_b_5" type="text" placeholder="Username or email" v-model="user_login.username_email">
                 <input class="input mg_b_5" type="password" placeholder="Password" v-model="user_login.password">
-                <button type="submit" class="fs_13">Login</button>
 
                 <div class="msg">
                     <p class="error_msg" v-if="store.msg_error">{{ store.msg_error }}</p>
                 </div>
-            </form>
 
-            <div class="action">
-                <button @click="show_logup = true" class="fs_13">Create new account</button>
-            </div>
+                <div class="display_flex_column align_center gap5 mg_t_10">
+                    <button type="submit" class="fs_15">Login</button>
+                    <label @click="show_logup = true" class="button fs_15">Create new account</label>
+                </div>
+            </form>
         </div>
     </div>
 </template>
 
 <style>
 .authen {
-    height: 100%;
-    background: transparent;
+    height: max-content;
 }
-.authen_item{
+
+.authen_item {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.authen_form{
+.authen_form {
     display: flex;
     flex-direction: column;
     align-items: center;

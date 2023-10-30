@@ -121,6 +121,7 @@ const delete_video = (id) => {
                     my_video_list.value.splice(i, 1)
                 }
             }
+            store.msg_success = 'Delete successful.'
         })
         .catch(error => {
             try {
@@ -208,6 +209,7 @@ const delete_music = (id) => {
                     my_music_list.value.splice(i, 1)
                 }
             }
+            store.msg_success = 'Delete successful.'
         })
         .catch(error => {
             try {

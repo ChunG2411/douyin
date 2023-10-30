@@ -17,6 +17,8 @@ export const Store = defineStore('store', {
         noti: null,
         chat: null,
 
+        loading: false,
+
         comment_tag: {
             video_id: '',
             comment_id: '',

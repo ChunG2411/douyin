@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, ref, onMounted, nextTick } from 'vue'
+import { defineProps, ref, onMounted } from 'vue'
 
 const props = defineProps({
     src: String
@@ -16,6 +16,7 @@ const durtime = ref('00:00')
 
 const video_play = ref(true)
 const video_mute = ref(true)
+
 
 onMounted(() => {
     player.value = document.getElementById('video-element')
@@ -46,17 +47,8 @@ onMounted(() => {
     }, false)
 
     player.value.addEventListener('ended', function () { this.play(); }, false)
-
-    // progressBar.value.addEventListener("click", seek)
 })
 
-
-// function seek(e) {
-//     var percent = e.offsetX / progressBar.value.offsetWidth
-//     player.value.setcurrenttime = percent * player.value.duration
-//     progressBar.value.value = Math.floor(percent * 100)
-//     progressBar.value.innerHTML = Math.floor(percent * 100) + '% played'
-// }
 
 function playPauseVideo() {
     if (player.value.paused || player.value.ended) {

@@ -39,27 +39,27 @@ onMounted(() => {
   <div class="taskbar">
     <div class="taskbar_item active_taskbar">
       <font-awesome-icon :icon="['fas', 'house']" class="icon15 white icon_margin_right" />
-      <router-link class="text normal_color fs_15" to="/">home</router-link>
+      <router-link class="text normal_color fs_15" to="/">Home</router-link>
     </div>
 
     <router-link class="taskbar_item no_decor" to="/followed" v-if="store.is_login">
       <font-awesome-icon :icon="['fas', 'star']" class="icon15 white icon_margin_right" />
-      <p class="text normal_color fs_15">followed</p>
+      <p class="text normal_color fs_15">Followed</p>
     </router-link>
 
     <div class="taskbar_item" v-else @click="show_login_popup = !show_login_popup">
       <font-awesome-icon :icon="['fas', 'star']" class="icon15 white icon_margin_right" />
-      <p class="text normal_color fs_15">followed</p>
+      <p class="text normal_color fs_15">Followed</p>
     </div>
 
     <router-link class="taskbar_item no_decor" v-if="store.is_login" to="/profile/self">
       <font-awesome-icon :icon="['fas', 'user']" class="icon15 white icon_margin_right" />
-      <p class="text normal_color fs_15">profile</p>
+      <p class="text normal_color fs_15">Profile</p>
     </router-link>
 
     <div class="taskbar_item" v-else @click="show_login_popup = !show_login_popup">
       <font-awesome-icon :icon="['fas', 'user']" class="icon15 white icon_margin_right" />
-      <p class="text normal_color fs_15">profile</p>
+      <p class="text normal_color fs_15">Profile</p>
     </div>
   </div>
 

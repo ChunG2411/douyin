@@ -97,6 +97,10 @@ body {
   justify-content: space-between;
 }
 
+.width_100{
+  width: 100%;
+}
+
 .mg_b_5 {
   margin-bottom: 5px;
 }
@@ -260,13 +264,14 @@ body {
 /* button */
 button {
   width: max-content;
-  min-width: 50px;
+  /* min-width: 50px; */
   background: transparent;
   border-radius: 5px;
   border: 1px solid var(--boder_color);
   padding: 5px 15px;
   color: var(--text_color);
   cursor: pointer;
+  height: max-content;
 }
 
 button:hover {
@@ -275,7 +280,7 @@ button:hover {
 
 .button {
   width: max-content;
-  min-width: 50px;
+  /* min-width: 50px; */
   background: transparent;
   border-radius: 5px;
   border: 1px solid var(--boder_color);
@@ -284,10 +289,20 @@ button:hover {
   cursor: pointer;
   display: grid;
   place-content: center;
+  height: max-content;
 }
 
 .button:hover {
   background: var(--hover_color);
+}
+
+.submit_icon{
+  border: 0;
+  padding: 0;
+  align-items: left;
+}
+.submit_icon:hover{
+  background: transparent;
 }
 
 
@@ -441,8 +456,8 @@ button:hover {
 }
 
 .chat_avatar_detail{
-  width: 100px;
-  height: 100px;
+  width: 150px;
+  height: 150px;
   aspect-ratio: 1/1;
   border-radius: 50%;
   overflow: hidden;
@@ -470,6 +485,10 @@ button:hover {
 
 .video_manager {
   width: 100px;
+}
+
+.video_home{
+  height: 100%;
 }
 
 

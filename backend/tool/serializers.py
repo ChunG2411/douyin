@@ -51,12 +51,12 @@ class ChatSerializer(serializers.ModelSerializer):
     def get_name(self, obj):
         request = self.context.get("request")
         if request and hasattr(request, "user"):
-            user = request.user
+            this_user = request.user
 
         handle_name = obj.name
         if obj.type == '1':
             for i in obj.member.all():
-                if i.username != user.username:
+                if i.username != this_user.username:
                     handle_name = i.get_full_name
         return handle_name
 
@@ -96,7 +96,8 @@ class ChatSerializer(serializers.ModelSerializer):
             except Exception as e:
                 raise serializers.ValidationError(response_error(str(e)))
             
-            chat = Chat.objects.filter(name=name)
+            this_user = User.objects.get(id=user_id)
+            chat = Chat.objects.filter(user=this_user, name=name)
             if chat:
                 raise serializers.ValidationError(response_error("Chat already exist."))
         else:
@@ -127,7 +128,7 @@ class ChatSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    have_more = serializers.SerializerMethodField
+    have_more = serializers.SerializerMethodField()
 
     class Meta:
         model = Message

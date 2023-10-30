@@ -30,7 +30,7 @@ def SearchVideo(request):
             searchs.last().delete()
         SearchRecent.objects.create(user=request.user, text=text)
 
-    videos = Video.objects.filter(descrip__contains=text)[
+    videos = Video.objects.filter(descrip__icontains=text)[
         (int(page)*5):(int(page)+1)*5]
     serializers = VideoSerializer(
         videos, many=True, context={'request': request})
@@ -52,8 +52,8 @@ def SearchUser(request):
             searchs.last().delete()
         SearchRecent.objects.create(user=request.user, text=text)
 
-    users = User.objects.exclude(id=request.user.id).filter(Q(first_name__contains=text) | Q(
-        last_name__contains=text) | Q(username__contains=text))[(int(page)*10):(int(page)+1)*10]
+    users = User.objects.exclude(id=request.user.id).filter(Q(first_name__icontains=text) | Q(
+        last_name__icontains=text) | Q(username__icontains=text))[(int(page)*10):(int(page)+1)*10]
     serializers = UserDetailSerializer(users, many=True)
 
     return Response(response_success(serializers.data), status=200)
@@ -79,8 +79,7 @@ def SuggestSearch(request):
 @permission_classes([permissions.IsAuthenticated])
 def SearchChat(request):
     text = request.query_params['text']
-    chats = Chat.objects.filter(
-        member__id=request.user.id, name__contains=text)
+    chats = Chat.objects.filter(member__id=request.user.id).filter(name__icontains=text)
     serializers = ChatSerializer(
         chats, many=True, context={'request': request})
     return Response(response_success(serializers.data), status=200)
@@ -92,7 +91,7 @@ def SearchMessage(request, pk):
     text = request.query_params['text']
     try:
         chat = Chat.objects.get(id=pk)
-        message = Message.objects.filter(receiver=chat, context__contains=text)
+        message = Message.objects.filter(receiver=chat, context__icontains=text)
         serializers = MessageSerializer(message, many=True, context={'have_more': False})
         return Response(response_success(serializers.data), status=200)
     except Exception as e:
@@ -157,7 +156,7 @@ class ChatView(APIView):
         request_copy['user'] = request.user.id
         request_copy['member'] = member
 
-        serializer = self.serializer_class(data=request_copy)
+        serializer = self.serializer_class(data=request_copy, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(response_success(serializer.data), status=201)

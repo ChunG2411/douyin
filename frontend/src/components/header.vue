@@ -184,7 +184,7 @@ const redirectSearch = () => {
 
 <template>
     <div class="header">
-        <router-link :to="{ name: 'home', params: { username: '' } }" class="text normal_color">home</router-link>
+        <router-link :to="{ name: 'home', params: { username: '' } }" class="text normal_color">Anh Chung</router-link>
 
         <div class="search">
             <input type="text" class="input_search" id="search-bar" placeholder="What do you want to find?"
