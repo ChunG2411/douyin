@@ -16,7 +16,7 @@
   --background_color: #161823;
   --background_popup_color: #232430;
   --hover_color: #444444a2;
-  --text_color: rgb(212, 212, 212);
+  --text_color: rgb(233, 233, 233);
   --boder_color: #ababab;
   --scroll_color: #555555;
   --shadow_text: #7a7a7a;
@@ -28,21 +28,15 @@
 }
 
 body {
-  min-width: 320px;
-  min-height: 100%;
-  width: 100%;
-  height: 100%;
   background-color: var(--background_color);
   margin: 0;
-  top: 0;
+}
+
+#app{
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
 }
-
-#app {
-  width: 100%;
-  height: 100%;
-}
-
 
 /* display */
 .display_flex {
@@ -205,27 +199,39 @@ body {
   margin: 0;
 }
 
-.shadow {
-  text-shadow: 1px 0 var(--shadow_text), -1px 0 var(--shadow_text), 0 1px var(--shadow_text), 0 -1px var(--shadow_text),
-    1px 1px var(--shadow_text), -1px -1px var(--shadow_text), 1px -1px var(--shadow_text), -1px 1px var(--shadow_text);
+.video_text_1{
+  font-weight: 500;
+  text-decoration: none;
+  margin: 0;
+  color: rgb(255, 255, 255);
 }
 
+.video_text_2{
+  font-weight: 350;
+  text-decoration: none;
+  margin: 0;
+  color: rgb(255, 255, 255);
+}
+
+.shadow{
+  text-shadow: 0 1px 1px rgba(0,0,0,.5)
+}
+
+.fs_10 {
+  font-size: 10px;
+}
 .fs_11 {
   font-size: 11px;
 }
-
 .fs_13 {
   font-size: 13px;
 }
-
 .fs_15 {
   font-size: 15px;
 }
-
 .fs_17 {
   font-size: 17px;
 }
-
 .fs_20 {
   font-size: 20px;
 }
@@ -311,7 +317,8 @@ button:hover {
   border: 1px solid var(--boder_color);
   border-radius: 10px;
   height: 18px;
-  width: 200px;
+  max-width: 250px;
+  width: max-content;
   padding: 5px 10px;
   background: var(--background_color);
   color: var(--text_color);
@@ -321,7 +328,7 @@ button:hover {
 .select {
   background: var(--background_color);
   height: 30px;
-  width: 100px;
+  width: max-content;
   color: var(--text_color);
   border: 1px solid var(--boder_color);
   border-radius: 10px;
@@ -424,6 +431,28 @@ button:hover {
   aspect-ratio: 1/1;
   overflow: hidden;
   box-shadow: 0 0 2px var(--boder_color);
+}
+
+.avatar_music_icon {
+  width: 40px;
+  height: 40px;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 2px var(--boder_color);
+  cursor: pointer;
+  animation-name: spin;
+  animation-duration: 5000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear; 
+}
+@keyframes spin {
+  from {
+      transform:rotate(0deg);
+  }
+  to {
+      transform:rotate(360deg);
+  }
 }
 
 .profile_avatar_music_list {

@@ -10,8 +10,8 @@ from video.models import Video
 from video.serializers import VideoSerializer
 from user.models import User
 from user.serializers import UserDetailSerializer
-from .models import SearchRecent, Noti, Chat, Message
-from .serializers import NotiSerializer, ChatSerializer, MessageSerializer
+from .models import SearchRecent, Noti, Chat, Message, Setup
+from .serializers import NotiSerializer, ChatSerializer, MessageSerializer, SetupSerializer
 
 # Create your views here.
 
@@ -79,10 +79,10 @@ def SuggestSearch(request):
 @permission_classes([permissions.IsAuthenticated])
 def SearchChat(request):
     text = request.query_params['text']
-    chats = Chat.objects.filter(member__id=request.user.id).filter(name__icontains=text)
-    serializers = ChatSerializer(
-        chats, many=True, context={'request': request})
-    return Response(response_success(serializers.data), status=200)
+    chats = Chat.objects.filter(
+        member__id=request.user.id, partner__icontains=text)
+    serializer = ChatSerializer(chats, many=True, context={'request': request})
+    return Response(response_success(serializer.data), status=200)
 
 
 @api_view(['GET'])
@@ -91,8 +91,10 @@ def SearchMessage(request, pk):
     text = request.query_params['text']
     try:
         chat = Chat.objects.get(id=pk)
-        message = Message.objects.filter(receiver=chat, context__icontains=text)
-        serializers = MessageSerializer(message, many=True, context={'have_more': False})
+        message = Message.objects.filter(
+            receiver=chat, context__icontains=text)
+        serializers = MessageSerializer(
+            message, many=True, context={'have_more': False})
         return Response(response_success(serializers.data), status=200)
     except Exception as e:
         return Response(response_error(str(e)), status=400)
@@ -135,13 +137,18 @@ class ChatView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        chats = self.queryset.filter(member__id=request.user.id)
+        page = request.GET.get('page')
+        if not page:
+            page = "0"
+
+        chats = self.queryset.filter(member__id=request.user.id)[
+            (int(page)*10):((int(page)+1)*10)]
         return Response(response_success(self.serializer_class(chats, many=True,  context={'request': request}).data), status=200)
 
     def delete(self, request):
         chat_id = request.GET.get('id')
         try:
-            self.queryset.get(id=chat_id, user=request.user).delete()
+            self.queryset.get(id=chat_id).delete()
             return Response(response_success("Delete successful."), status=204)
         except Exception as e:
             return Response(response_error(str(e)), status=400)
@@ -156,7 +163,8 @@ class ChatView(APIView):
         request_copy['user'] = request.user.id
         request_copy['member'] = member
 
-        serializer = self.serializer_class(data=request_copy, context={'request': request})
+        serializer = self.serializer_class(
+            data=request_copy, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(response_success(serializer.data), status=201)
@@ -172,6 +180,7 @@ class ChatView(APIView):
             chat = Chat.objects.get(id=chat_id)
             if name:
                 chat.name = name
+                chat.partner = name
             if avatar:
                 chat.avatar = avatar
             chat.save()
@@ -229,6 +238,50 @@ def remove_member_to_chat(request, pk):
         return Response(response_error(str(e)), status=400)
 
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def exit_chat(request, pk):
+    try:
+        chat = Chat.objects.get(id=pk)
+        if chat.type == "1":
+            return Response(response_error("Couldn't exit this chat."), status=400)
+
+        if request.user == chat.user:
+            for i in chat.member.all():
+                if i != request.user:
+                    chat.user = i
+                    chat.save()
+                    chat.member.remove(request.user)
+                    break
+        else:
+            chat.member.remove(request.user)
+
+        return Response(response_success("Exit chat successful."), status=200)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+
+
+@api_view(['PUT'])
+@permission_classes([permissions.IsAuthenticated])
+def change_key_chat(request, pk):
+    username = request.data.get('username')
+    try:
+        chat = Chat.objects.get(id=pk)
+        if chat.type == "1":
+            return Response(response_error("Couldn't change key of chat"), status=400)
+
+        user = User.objects.get(username=username)
+        if not user in chat.member.all():
+            return Response(response_error("Check username"), status=400)
+
+        chat.user = user
+        chat.save()
+
+        return Response(response_success("Change key of chat successful."), status=200)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+
+
 class MessageView(APIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
@@ -252,7 +305,8 @@ class MessageView(APIView):
             for i in message:
                 i.reader.add(request.user)
 
-            serializer = self.serializer_class(message, many=True, context={'have_more': have_more})
+            serializer = self.serializer_class(
+                message, many=True, context={'have_more': have_more})
             return Response(response_success(serializer.data), status=200)
         except Exception as e:
             return Response(response_error(str(e)), status=400)
@@ -271,9 +325,32 @@ class MessageView(APIView):
         request_copy['sender'] = request.user.id
         request_copy['receiver'] = pk
 
-        serializer = MessageSerializer(data=request_copy, context={'have_more': False})
+        serializer = MessageSerializer(
+            data=request_copy, context={'have_more': False})
         if serializer.is_valid():
             serializer.save()
             return Response(response_success(serializer.data), status=201)
         else:
             return Response(response_error(serializer.errors), status=400)
+
+
+@permission_classes([permissions.IsAuthenticated])
+class SaveSetup(APIView):
+    def get(self, request):
+        setup = Setup.objects.get_or_create(user=request.user)[0]
+        serializer = SetupSerializer(setup)
+        return Response(response_success(serializer.data), status=200)
+
+    def put(self, request):
+        lang = request.data.get('lang')
+        theme = request.data.get('theme')
+
+        setup = Setup.objects.get_or_create(user=request.user)[0]
+        if lang:
+            setup.lang = lang
+        if theme:
+            setup.theme = theme
+        setup.save()
+        serializer = SetupSerializer(setup)
+
+        return Response(response_success(serializer.data), status=201)

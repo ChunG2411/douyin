@@ -150,7 +150,7 @@ class ChatConsumer(WebsocketConsumer):
                             'name': receiver.name if receiver.type=='2' else sender.get_full_name
                         },
                         'member': list(member),
-                        'text': sender.get_full_name + ' sended new message.'
+                        'text': sender.get_full_name + ': ' + data_json['content']
                     }
                 }
             )

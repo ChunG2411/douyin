@@ -35,6 +35,7 @@ class Video(models.Model):
     video = models.FileField(upload_to="video", validators=[FileExtensionValidator(allowed_extensions=['mp4'])])
     music = models.ForeignKey(Music, on_delete=models.SET_NULL, related_name="video_music", null=True, blank=True)
     public = models.BooleanField(default=True)
+    view = models.IntegerField(default=0)
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import User, UserFollower, UserFollowed
 from video.models import Video
 from social_network.config import response_error
+from tool.models import Setup
 
 class UserRegisterSerializers(serializers.ModelSerializer):
     class Meta:
@@ -54,6 +55,7 @@ class UserRegisterSerializers(serializers.ModelSerializer):
 
         UserFollower.objects.create(user=user)
         UserFollowed.objects.create(user=user)
+        Setup.objects.create(user=user)
 
         return user
 

@@ -220,6 +220,18 @@ const loadMore = (e) => {
 }
 window.addEventListener('scroll', loadMore)
 
+const increaseView = (id) => {
+    axios.get(`${store.domain}/api/video/${id}/increase`)
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
+}
+
 </script>
 
 <template>
@@ -228,24 +240,25 @@ window.addEventListener('scroll', loadMore)
             <div class="home_video_left">
                 <div class="home_video_left_video">
                     <video class="video" id="video-element" :src="video.video" @click="playPauseVideo(index)"
-                        @timeupdate="updatetime(index)" @ended="replayVideo(index)" @playing="handleMute()"></video>
+                        @timeupdate="updatetime(index)" @ended="video.play = false; increaseView(video.id)"
+                        @playing="handleMute()"></video>
                     <div class="controls">
                         <progress class="controls_bar mg_b_5" id='progress-bar' min='0' max='100' value='0'>0%
                             played</progress>
                         <div class="controls_button">
                             <div class="display_flex gap10 align_center">
-                                <font-awesome-icon :icon="['fas', 'pause']" class="icon_15" id="btnPlayPause"
+                                <font-awesome-icon :icon="['fas', 'pause']" class="icon_15 white" id="btnPlayPause"
                                     v-if="video.play" @click="playPauseVideo(index)" />
-                                <font-awesome-icon :icon="['fas', 'play']" class="icon_15" id="btnPlayPause" v-else
-                                    @click="playPauseVideo(index)" />
-                                <p class="normal_text normal_color fs_15">{{ video.time }}</p>
+                                <font-awesome-icon :icon="['fas', 'play']" class="icon_15 white" id="btnPlayPause"
+                                    v-else @click="playPauseVideo(index)" />
+                                <p class="video_text_2 fs_15">{{ video.time }}</p>
                             </div>
                             <div class="display_flex gap10 align_center">
                                 <input type="range" id="volume-bar" min="0" max="1" step="0.1" v-model="video_volumn"
                                     @change="handleVolumn">
-                                <font-awesome-icon :icon="['fas', 'volume-xmark']" class="icon_15" id="btnMute"
+                                <font-awesome-icon :icon="['fas', 'volume-xmark']" class="icon_15 white" id="btnMute"
                                     @click='setMute' v-if="video_mute" />
-                                <font-awesome-icon :icon="['fas', 'volume-high']" class="icon_15" id="btnMute"
+                                <font-awesome-icon :icon="['fas', 'volume-high']" class="icon_15 white" id="btnMute"
                                     @click='setMute' v-else />
                             </div>
                         </div>
@@ -259,45 +272,49 @@ window.addEventListener('scroll', loadMore)
                     <div @click="like_video(video.id)" class="display_flex_column align_center poiter">
                         <font-awesome-icon :icon="['fas', 'heart']" class="icon_25 red" v-if="video.liked" />
                         <font-awesome-icon :icon="['fas', 'heart']" class="icon_25 white" v-else />
-                        <p class="normal_text normal_color fs_15">{{ video.like_count }}</p>
+                        <p class="video_text_2 fs_15 shadow">{{ video.like_count }}</p>
                     </div>
 
                     <div @click="video.showComment = !video.showComment; video.showProfile = false"
                         class="display_flex_column align_center poiter">
                         <font-awesome-icon :icon="['fas', 'message']" class="icon_20 white" />
-                        <p class="normal_text normal_color fs_15">{{ video.comment_count }}</p>
+                        <p class="video_text_2 fs_15 shadow">{{ video.comment_count }}</p>
                     </div>
 
                     <div @click="save_video(video.id)" class="display_flex_column align_center poiter">
                         <font-awesome-icon :icon="['fas', 'star']" class="icon_20 yellow" v-if="video.saved" />
                         <font-awesome-icon :icon="['fas', 'star']" class="icon_20 white" v-else />
-                        <p class="normal_text normal_color fs_15">{{ video.save_count }}</p>
+                        <p class="video_text_2 fs_15 shadow">{{ video.save_count }}</p>
                     </div>
                 </div>
 
                 <div class="home_video_left_infor">
                     <div>
-                        <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }"
-                            v-if="my_user != video.user_infor.username" class="text normal_color fs_17 no_decor shadow">
-                            {{ video.user_infor.full_name }}
-                        </router-link>
-                        <router-link to="/profile/self" v-else class="text normal_color fs_17 no_decor shadow">
-                            {{ video.user_infor.full_name }}
-                        </router-link>
-
-                        <p class="normal_text normal_color fs_15 shadow">{{ video.descrip }}</p>
+                        <div class="display_flex align_center gap10">
+                            <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }"
+                                v-if="my_user != video.user_infor.username" class="video_text_1 fs_17 no_decor shadow">
+                                {{ video.user_infor.full_name }}
+                            </router-link>
+                            <router-link to="/profile/self" v-else class="video_text_1 fs_17 no_decor shadow">
+                                {{ video.user_infor.full_name }}
+                            </router-link>
+                            <p class="video_text_2 fs_10 shadow">-{{ video.create_time }} {{
+                                store.translate("creator",
+                                    "duration") }}-</p>
+                        </div>
+                        <p class="video_text_2 fs_15 shadow">{{ video.descrip }}</p>
                     </div>
 
                     <router-link :to="{ name: 'music', params: { id: video.music } }" v-if="video.music">
-                        <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar">
+                        <img class="avatar_music_icon" :src="store.domain + video.music_avatar">
                     </router-link>
-                    <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar" v-else>
+                    <img class="avatar_music_icon" :src="store.domain + video.user_infor.avatar" v-else>
                 </div>
             </div>
 
             <div class="home_video_right" v-if="video.showComment || video.showProfile">
                 <div class="home_video_right_board" v-if="video.showComment">
-                    <p class="text normal_color fs_17 pd_b_10">Comment</p>
+                    <p class="text normal_color fs_17 pd_b_10">{{ store.translate("comment", "comment") }}</p>
                     <CommentComponent :video_id="video.id" />
                 </div>
                 <div class="home_video_right_board" v-if="video.showProfile">
@@ -316,8 +333,8 @@ window.addEventListener('scroll', loadMore)
 
 <style>
 .home {
-    width: 90%;
-    height: 90%;
+    width: 98%;
+    height: 99%;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -341,7 +358,7 @@ window.addEventListener('scroll', loadMore)
 
 .home_video {
     width: 100%;
-    height: 95%;
+    height: 100%;
     min-height: 95%;
     background: var(--background_video);
     border-radius: 10px;

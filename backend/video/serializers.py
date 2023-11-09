@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from datetime import datetime
 
 from .models import Video, Music, LikeVideo, LikeComment, CommentVideo, Save
 from user.models import User
@@ -12,6 +13,9 @@ class VideoSerializer(serializers.ModelSerializer):
     user_infor = serializers.SerializerMethodField()
     liked = serializers.SerializerMethodField()
     saved = serializers.SerializerMethodField()
+    music_avatar = serializers.SerializerMethodField()
+    create_time = serializers.SerializerMethodField()
+    
 
     class Meta:
         model = Video
@@ -57,10 +61,21 @@ class VideoSerializer(serializers.ModelSerializer):
         else:
             return False
 
+    def get_music_avatar(self,  obj):
+        if obj.music:
+            return obj.music.user.avatar.url
+        else:
+            return obj.user.avatar.url
+    
+    def get_create_time(self, obj):
+        duration = datetime.now() - obj.create_time.replace(tzinfo=datetime.now().tzinfo)
+        return duration.days
+
 
 class MusicSerializer(serializers.ModelSerializer):
     user_infor = serializers.SerializerMethodField()
     video_count = serializers.SerializerMethodField()
+    create_time = serializers.SerializerMethodField()
 
     class Meta:
         model = Music
@@ -80,6 +95,9 @@ class MusicSerializer(serializers.ModelSerializer):
         video = Video.objects.filter(music=obj.id)
         return video.count()
 
+    def get_create_time(self, obj):
+        duration = datetime.now() - obj.create_time.replace(tzinfo=datetime.now().tzinfo)
+        return duration.days
 
 class LikeVideoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -99,6 +117,7 @@ class CommentVideoSerializer(serializers.ModelSerializer):
     liked = serializers.SerializerMethodField()
     child_count = serializers.SerializerMethodField()
     have_more = serializers.SerializerMethodField()
+    create_time = serializers.SerializerMethodField()
 
     class Meta:
         model = CommentVideo
@@ -132,6 +151,10 @@ class CommentVideoSerializer(serializers.ModelSerializer):
 
     def get_have_more(self, obj):
         return self.context.get("have_more")
+    
+    def get_create_time(self, obj):
+        duration = datetime.now() - obj.create_time.replace(tzinfo=datetime.now().tzinfo)
+        return duration.days
     
 
 class SaveSerializer(serializers.ModelSerializer):

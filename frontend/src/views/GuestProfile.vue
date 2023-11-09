@@ -177,8 +177,8 @@ const unfollow = () => {
                         <p class="username gray fs_13">@{{ profile.infor.username }}</p>
                     </div>
                     <div class="profile_follow_infor">
-                        <button @click="show_followed" class="fs_13">Followed: {{ profile.infor.followed_count }}</button>
-                        <button @click="show_follower" class="fs_13">Follower: {{ profile.infor.follower_count }}</button>
+                        <button @click="show_followed" class="fs_13">{{store.translate("profile", "followed")}}: {{ profile.infor.followed_count }}</button>
+                        <button @click="show_follower" class="fs_13">{{store.translate("profile", "follower")}}: {{ profile.infor.follower_count }}</button>
                     </div>
                     <div class="display_flex_column gap5">
                         <div class="display_flex gap10">
@@ -197,15 +197,15 @@ const unfollow = () => {
                 </div>
             </div>
             <div class="profile_infor_right" v-if="store.is_login">
-                <button @click="unfollow" v-if="profile.follow_status" class="fs_15">Unfollow</button>
-                <button @click="follow" v-else class="fs_15">Follow</button>
+                <button @click="unfollow" v-if="profile.follow_status" class="fs_15">{{store.translate("profile", "unfollow")}}</button>
+                <button @click="follow" v-else class="fs_15">{{store.translate("profile", "follow")}}</button>
             </div>
         </div>
 
         <div class="profile_video">
             <div class="profile_video_tag">
                 <div class="tag_item active_tag" id="created" @click="profile.active_tab = 'video'">
-                    <p class="text normal_color fs_15">Create</p>
+                    <p class="text normal_color fs_15">{{store.translate("profile", "create")}}</p>
                 </div>
             </div>
             <VideoListComponent :active="profile.active_tab" :username="route.params.username" />
@@ -213,7 +213,7 @@ const unfollow = () => {
 
         <div class="popup" v-if="show_followed_popup || show_follower_popup || show_avatar_popup">
             <div class="popup_board" id="followed_popup" v-if="show_followed_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Followed</p>
+                <p class="text normal_color fs_17">{{store.translate("profile", "followed")}}</p>
                 <div class="follow_board">
                     <div class="follow_board_item poiter" v-for="user in profile.followed">
                         <div class="follow_context">
@@ -222,13 +222,13 @@ const unfollow = () => {
                         </div>
                         <button>
                             <router-link class="text normal_color fs_15"
-                                :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
+                                :to="{ name: 'guest_profile', params: { username: user.username } }">{{store.translate("search", "view")}}</router-link>
                         </button>
                     </div>
                 </div>
             </div>
             <div class="popup_board" id="follower_popup" v-if="show_follower_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Follower</p>
+                <p class="text normal_color fs_17">{{store.translate("profile", "follower")}}</p>
                 <div class="follow_board">
                     <div class="follow_board_item poiter" v-for="user in profile.follower">
                         <div class="follow_context">
@@ -237,7 +237,7 @@ const unfollow = () => {
                         </div>
                         <button>
                             <router-link class="text normal_color fs_15"
-                                :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
+                                :to="{ name: 'guest_profile', params: { username: user.username } }">{{store.translate("search", "view")}}</router-link>
                         </button>
                     </div>
                 </div>
@@ -252,8 +252,8 @@ const unfollow = () => {
 
 <style>
 .profile {
-    width: 87%;
-    height: 90%;
+    width: 98%;
+    height: 100%;
 }
 
 .profile_infor {

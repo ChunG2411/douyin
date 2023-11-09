@@ -273,8 +273,8 @@ onMounted(() => {
 <template>
     <div class="search_view">
         <div class="search_view_bar">
-            <button class="search_tag active_search_tag" id="video" @click="search_video">video</button>
-            <button class="search_tag" id="user" @click="search_user">user</button>
+            <button class="search_tag active_search_tag" id="video" @click="search_video">{{store.translate("search", "video")}}</button>
+            <button class="search_tag" id="user" @click="search_user">{{store.translate("search", "user")}}</button>
         </div>
 
         <div class="search_board">
@@ -286,10 +286,10 @@ onMounted(() => {
                         <p class="text normal_color fs_15">{{ user.full_name }}</p>
                     </div>
                     <router-link class="button no_decor"
-                        :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
+                        :to="{ name: 'guest_profile', params: { username: user.username } }">{{store.translate("search", "view")}}</router-link>
                 </div>
                 <div v-else>
-                    <p class="normal_text normal_color fs_15">No result</p>
+                    <p class="normal_text normal_color fs_15">{{store.translate("search", "no")}}</p>
                 </div>
             </div>
 
@@ -333,15 +333,11 @@ onMounted(() => {
 
                     <div class="item_video_search_right" v-if="video.showComment">
                         <div class="item_video_search_right_board">
-                            <p class="text normal_color fs_17 pd_b_10">Comment</p>
+                            <p class="text normal_color fs_17 pd_b_10">{{store.translate("comment", "comment")}}</p>
                             <CommentComponent :video_id="video.id" />
                         </div>
                     </div>
                 </div>
-                <div v-else>
-                    <p class="normal_text normal_color fs_15">No result</p>
-                </div>
-
             </div>
         </div>
     </div>
@@ -355,8 +351,8 @@ onMounted(() => {
 
 <style>
 .search_view {
-    width: 87%;
-    height: 90%;
+    width: 98%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -376,7 +372,7 @@ onMounted(() => {
 
 .search_board {
     width: 100%;
-    height: 90%;
+    height: 92%;
     padding: 10px;
 }
 

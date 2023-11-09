@@ -11,8 +11,10 @@ const store = Store()
 const upload_video_form = reactive({
     descrip: '',
     video: '',
+    video_volumn: '1',
     use_video_music: '1',
     music: '',
+    music_volumn: '1',
     public: true
 })
 const upload_music_form = reactive({
@@ -76,9 +78,12 @@ const select_music = (object) => {
 const remove_music = () => {
     upload_video_form.music = ''
     upload_video_form.use_video_music = '1'
+    music_play.value = false
 }
 
 const submit_upload_video = () => {
+    store.loading = true
+
     const form = new FormData()
     form.append('descrip', upload_video_form.descrip)
     form.append('video', upload_video_form.video)
@@ -89,8 +94,9 @@ const submit_upload_video = () => {
     }
     else {
         form.append('music', upload_video_form.music.id)
-
     }
+    form.append('music_volumn', upload_video_form.music_volumn)
+    form.append('video_volumn', upload_video_form.video_volumn)
     form.append('public', upload_video_form.public)
 
     const header = {
@@ -98,7 +104,8 @@ const submit_upload_video = () => {
     }
     axios.post(`${store.domain}/api/user/${localStorage.getItem('username')}/video`, form, header)
         .then(response => {
-            store.msg_success = "Create successful."
+            store.loading = false
+            store.msg_success = store.translate("msg", "success")
         })
         .catch(error => {
             try {
@@ -121,7 +128,7 @@ const delete_video = (id) => {
                     my_video_list.value.splice(i, 1)
                 }
             }
-            store.msg_success = 'Delete successful.'
+            store.msg_success = store.translate("msg", "delete")
         })
         .catch(error => {
             try {
@@ -139,6 +146,8 @@ const upload_music = (e) => {
 }
 
 const submit_upload_music = () => {
+    store.loading = true
+
     const form = new FormData()
     form.append('name', upload_music_form.name)
     form.append('music', upload_music_form.music)
@@ -148,7 +157,8 @@ const submit_upload_music = () => {
     }
     axios.post(`${store.domain}/api/music`, form, header)
         .then(response => {
-            store.msg_success = "Create successful."
+            store.msg_success = store.translate("msg", "create")
+            store.loading = false
         })
         .catch(error => {
             try {
@@ -209,7 +219,7 @@ const delete_music = (id) => {
                     my_music_list.value.splice(i, 1)
                 }
             }
-            store.msg_success = 'Delete successful.'
+            store.msg_success = store.translate("msg", "delete")
         })
         .catch(error => {
             try {
@@ -349,50 +359,129 @@ onMounted(() => {
     })
 })
 
+// 
+const music_player = ref(null)
+const music_play = ref(false)
+const video_player = ref(null)
+
+const handle_music = () => {
+    if (music_play.value) {
+        music_play.value = false
+        music_player.value.pause()
+    }
+    else {
+        music_play.value = true
+        music_player.value.play()
+    }
+}
+
+const preview_video = () => {
+    if (music_player.value) {
+        music_player.value.volume = parseFloat(upload_video_form.music_volumn)
+        music_player.value.play()
+        music_play.value = true
+    }
+    video_player.value.volume = parseFloat(upload_video_form.video_volumn)
+    video_player.value.play()
+}
+
+const endPreview = () => {
+    if (music_player.value) {
+        music_player.value.pause()
+    }
+}
+
+const pausePreview = () => {
+    if (music_player.value) {
+        music_player.value.pause()
+        music_play.value = false
+    }
+}
+
+const playPreview = () => {
+    if (music_player.value) {
+        music_player.value.play()
+        music_play.value = true
+    }
+}
+
 </script>
 
 <template>
     <div class="creator">
         <div class="creator_tag">
-            <button class="creator_tag_item creator_active_tag" @click="active_tab('video')">create video</button>
-            <button class="creator_tag_item" @click="active_tab('music')">create music</button>
-            <button class="creator_tag_item" @click="active_tab('manager')">manager</button>
+            <button class="creator_tag_item creator_active_tag" @click="active_tab('video')">{{ store.translate("creator",
+                "c_video") }}</button>
+            <button class="creator_tag_item" @click="active_tab('music')">{{ store.translate("creator", "c_music")
+            }}</button>
+            <button class="creator_tag_item" @click="active_tab('manager')">{{ store.translate("creator",
+                "manager") }}</button>
         </div>
         <div class="creator_board">
             <div class="creator_board_item" id="creator_video" v-if="active_bar.create_video">
                 <div class="creator_board_item_left">
-                    <video class="video_preveiw_creator" v-if="preveiw.video" :src="preveiw.video" controls></video>
-                    <label class="text normal_color fs_15 poiter" v-else for="upload_video_creator">No video</label>
-                    <label class="change_video_upload button" for="upload_video_creator" v-if="preveiw.video">Change</label>
+                    <video class="video_preveiw_creator" ref="video_player" v-if="preveiw.video" :src="preveiw.video"
+                        @ended="endPreview" @pause="pausePreview" @play="playPreview" controls></video>
+                    <label class="text normal_color fs_15 poiter" v-else for="upload_video_creator">{{
+                        store.translate("creator", "no") }}</label>
+                    <label class="change_video_upload button" for="upload_video_creator" v-if="preveiw.video">{{
+                        store.translate("profile", "change") }}</label>
                 </div>
 
                 <div class="creator_board_item_right">
                     <form @submit.prevent="submit_upload_video">
-                        <p class="text normal_color fs_15">Description</p>
-                        <input type="text" class="input mg_l_10" placeholder="Enter description..."
+                        <p class="text normal_color fs_15">{{ store.translate("creator", "des") }}</p>
+                        <input type="text" class="input mg_l_10" :placeholder="store.translate('creator', 'des')"
                             v-model="upload_video_form.descrip">
                         <input type="file" id="upload_video_creator" accept="video/*" @change="upload_video"
                             style="display: none;">
 
-                        <p class="text normal_color fs_15">Music</p>
+                        <p class="text normal_color fs_15">{{ store.translate("creator", "music") }}</p>
                         <div v-if="upload_video_form.music" class="display_flex gap10 mg_l_10">
-                            <img class="profile_avatar_music_list"
-                                :src="store.domain + upload_video_form.music.user_infor.avatar">
+                            <div class="music_select_preview">
+                                <img class="profile_avatar_music_list"
+                                    :src="store.domain + upload_video_form.music.user_infor.avatar">
+                                <audio ref="music_player" :src="store.domain + upload_video_form.music.music"
+                                    style="display: none;" @ended="music_play = true; music_player.play()" @play="music_play = true"></audio>
+                                <font-awesome-icon :icon="['fas', 'pause']" class="icon_25 white" id="btnPlayPause_creator"
+                                    v-if="music_play" @click="handle_music()" />
+                                <font-awesome-icon :icon="['fas', 'play']" class="icon_25 white" id="btnPlayPause_creator"
+                                    v-else @click="handle_music()" />
+                            </div>
                             <div>
                                 <p class="normal_text normal_color fs_15">{{ upload_video_form.music.name }}</p>
-                                <p class="button fs_13 mg_t_10" @click="remove_music">Remove</p>
+                                <p class="button fs_13 mg_t_10" @click="remove_music">{{ store.translate("comment",
+                                    "remove") }}</p>
                             </div>
                         </div>
                         <div v-else class="display_flex align_center gap10 mg_l_10">
-                            <p class="normal_text normal_color fs_13">Use music of this video</p>
-                            <p class="button fs_13" @click="get_music_list">Select other music</p>
+                            <p class="normal_text normal_color fs_13">{{ store.translate("creator", "used_music") }}</p>
+                            <p class="button fs_13" @click="get_music_list">{{ store.translate("creator", "select_music") }}
+                            </p>
+                        </div>
+
+                        <div class="display_flex_column gap10 mg_l_10">
+                            <div class="display_flex gap10 align_center" v-if="upload_video_form.music">
+                                <p class="text normal_color fs_15">{{ store.translate("creator", "music_volumn") }}</p>
+                                <input type="range" id="volume-bar" min="0" max="1" step="0.1"
+                                    v-model="upload_video_form.music_volumn">
+                            </div>
+                            <div class="display_flex gap10 align_center" v-if="upload_video_form.video">
+                                <p class="text normal_color fs_15">{{ store.translate("creator", "video_volumn") }}</p>
+                                <input type="range" id="volume-bar" min="0" max="1" step="0.1"
+                                    v-model="upload_video_form.video_volumn">
+                            </div>
                         </div>
 
                         <div class="display_flex gap10 align_center">
-                            <p class="text normal_color fs_15">Public</p>
+                            <p class="text normal_color fs_15">{{ store.translate("creator", "public") }}</p>
                             <input type="checkbox" v-model="upload_video_form.public">
                         </div>
-                        <button type="submit">Submit</button>
+                        <div class="display_flex align_center gap10">
+                            <button type="submit">{{ store.translate("profile", "submit") }}</button>
+                            <label class="button fs_13" v-if="upload_video_form.video" @click="preview_video">{{
+                                store.translate("creator", "preview") }}</label>
+                        </div>
                     </form>
 
                     <div class="music_list" v-if="show_music_list" v-on-click-outside="close_popup">
@@ -402,12 +491,13 @@ onMounted(() => {
                                 <img class="profile_avatar_music_list" :src="store.domain + music.user_infor.avatar">
                                 <div>
                                     <p class="text normal_color fs_15">{{ music.name }}</p>
-                                    <p class="normal_text normal_color fs_13">{{ music.video_count }} used</p>
+                                    <p class="normal_text normal_color fs_13">{{ music.video_count }}
+                                        {{ store.translate("music", "used") }}</p>
                                 </div>
                             </div>
                         </div>
                         <div class="music_list_board" v-else>
-                            <p class="text normal_color fs_15">Don't have any music</p>
+                            <p class="text normal_color fs_15">{{ store.translate("creator", "no") }}</p>
                         </div>
                     </div>
                 </div>
@@ -415,67 +505,78 @@ onMounted(() => {
 
             <div class="creator_board_item" id="creator_music" v-if="active_bar.create_music">
                 <form @submit.prevent="submit_upload_music">
-                    <p class="text normal_color fs_15">Name</p>
-                    <input type="text" class="input mg_l_10" placeholder="Enter name of music..."
+                    <p class="text normal_color fs_15">{{ store.translate("creator", "name") }}</p>
+                    <input type="text" class="input mg_l_10" :placeholder="store.translate('creator', 'name')"
                         v-model="upload_music_form.name">
                     <input type="file" id="upload_music_creator" accept="audio/mp3" @change="upload_music"
                         style="display: none;">
 
-                    <p class="text normal_color fs_15">Music</p>
+                    <p class="text normal_color fs_15">{{ store.translate("creator", "music") }}</p>
                     <div v-if="preveiw.music" class="display_flex gap10 align_center mg_l_10">
                         <audio :src="preveiw.music" controls></audio>
-                        <p class="button fs_13">Change</p>
+                        <p class="button fs_13">{{ store.translate("profile", "change") }}</p>
                     </div>
                     <div class="display_flex gap10 align_center mg_l_10" v-else>
-                        <p class="normal_text normal_color fs_13">No music preveiw</p>
-                        <label class="button fs_13" for="upload_music_creator">Upload</label>
+                        <p class="normal_text normal_color fs_13">{{ store.translate("creator", "preview_music") }}</p>
+                        <label class="button fs_13" for="upload_music_creator">{{ store.translate("creator",
+                            "upload") }}</label>
                     </div>
 
-                    <button type="submit">Submit</button>
+                    <button type="submit">{{ store.translate("profile", "submit") }}</button>
                 </form>
             </div>
 
             <div class="creator_board_item" id="creator_manager" v-if="active_bar.manager">
                 <div class="creator_manager_left">
-                    <p class="text normal_color fs_17">Video</p>
+                    <p class="text normal_color fs_17">{{ store.translate("creator", "video") }}</p>
                     <div class="my_video" v-on:scroll="loadMoreVideo">
                         <div class="my_video_item" v-for="video in my_video_list" :key="video.id">
                             <video class="video_manager" :src="store.domain + video.video" />
                             <div class="display_flex_column gap5">
                                 <p class="normal_text normal_color fs_15">{{ video.descrip }}</p>
                                 <div class="display_flex align_center gap10">
-                                    <div class="display_flex align_center gap10 poiter">
-                                        <font-awesome-icon :icon="['fas', 'heart']" class="icon_15 white" />
+                                    <div class="display_flex align_center gap5 poiter">
+                                        <font-awesome-icon :icon="['fas', 'heart']" class="icon_15 normal_color" />
                                         <p class="normal_text normal_color fs_13">{{ video.like_count }}</p>
                                     </div>
 
-                                    <div class="display_flex align_center gap10 poiter">
-                                        <font-awesome-icon :icon="['fas', 'message']" class="icon_15 white" />
+                                    <div class="display_flex align_center gap5 poiter">
+                                        <font-awesome-icon :icon="['fas', 'message']" class="icon_15 normal_color" />
                                         <p class="normal_text normal_color fs_13">{{ video.comment_count }}</p>
                                     </div>
 
-                                    <div class="display_flex align_center gap10 poiter">
-                                        <font-awesome-icon :icon="['fas', 'star']" class="icon_15 white" />
+                                    <div class="display_flex align_center gap5 poiter">
+                                        <font-awesome-icon :icon="['fas', 'star']" class="icon_15 normal_color" />
                                         <p class="normal_text normal_color fs_13">{{ video.save_count }}</p>
+                                    </div>
+
+                                    <div class="display_flex align_center gap5 poiter">
+                                        <font-awesome-icon :icon="['fas', 'eye']" class="icon_15 normal_color" />
+                                        <p class="normal_text normal_color fs_13">{{ video.view }}</p>
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <p class="normal_text normal_color fs_13" v-if="video.public">Public</p>
-                                <p class="normal_text normal_color fs_13" v-else>Private</p>
-                                <p class="normal_text normal_color fs_13">{{ video.create_time }}</p>
+                                <p class="normal_text normal_color fs_13" v-if="video.public">{{ store.translate("creator",
+                                    "public") }}</p>
+                                <p class="normal_text normal_color fs_13" v-else>{{ store.translate("creator", "private") }}
+                                </p>
+                                <p class="normal_text normal_color fs_13">{{ video.create_time }} {{
+                                    store.translate("creator",
+                                        "duration") }}</p>
                             </div>
 
                             <div class="display_flex gap10 justify_right">
                                 <router-link class="button fs_13 no_decor"
-                                    :to="{ name: 'video', params: { id: video.id } }">View</router-link>
-                                <button @click="delete_video(video.id)">Delete</button>
+                                    :to="{ name: 'video', params: { id: video.id } }">{{ store.translate("search",
+                                        "view") }}</router-link>
+                                <button @click="delete_video(video.id)">{{ store.translate("comment", "remove") }}</button>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="creator_manager_right">
-                    <p class="text normal_color fs_17">Music</p>
+                    <p class="text normal_color fs_17">{{ store.translate("creator", "music") }}</p>
                     <div class="my_music" v-on:scroll="loadMoreMusic">
                         <div class="my_music_item" v-for="music in my_music_list" :key="music.id">
                             <img class="profile_avatar_music" :src="store.domain + music.user_infor.avatar">
@@ -483,13 +584,18 @@ onMounted(() => {
                                 <p class="normal_text normal_color fs_15">{{ music.name }}</p>
                             </div>
                             <div>
-                                <p class="normal_text normal_color fs_13">{{ music.video_count }} used</p>
-                                <p class="normal_text normal_color fs_13">{{ music.create_time }}</p>
+                                <p class="normal_text normal_color fs_13">{{ music.video_count }} {{
+                                    store.translate("music",
+                                        "used") }}</p>
+                                <p class="normal_text normal_color fs_13">{{ music.create_time }} {{
+                                    store.translate("creator",
+                                        "duration") }}</p>
                             </div>
                             <div class="display_flex gap10 justify_right">
                                 <router-link class="button fs_13 no_decor"
-                                    :to="{ name: 'music', params: { id: music.id } }">View</router-link>
-                                <button @click="delete_music(music.id)">Delete</button>
+                                    :to="{ name: 'music', params: { id: music.id } }">{{ store.translate("search",
+                                        "view") }}</router-link>
+                                <button @click="delete_music(music.id)">{{ store.translate("comment", "remove") }}</button>
                             </div>
                         </div>
                     </div>
@@ -501,8 +607,8 @@ onMounted(() => {
 
 <style>
 .creator {
-    width: 87%;
-    height: 90%;
+    width: 98%;
+    height: 99%;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -573,6 +679,19 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.music_select_preview {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    display: grid;
+    place-items: center;
+}
+
+#btnPlayPause_creator {
+    position: absolute;
+    z-index: 50;
 }
 
 .music_list {
@@ -710,4 +829,5 @@ onMounted(() => {
 
 .my_music_item:hover {
     background: var(--hover_color);
-}</style>
+}
+</style>

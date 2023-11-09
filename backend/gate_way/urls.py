@@ -17,14 +17,16 @@ from video.views import (
     CommentVideoView,
     DeleteCommentView,
     LikeCommentView,
-    SaveVideoView
+    SaveVideoView,
+    UpView
 )
 from tool.views import (
     SearchVideo, SearchUser, SearchChat, SearchMessage, RecentSearch, SuggestSearch,
     NotiView, DeleteNotiView,
     ChatView, 
     MessageView,
-    get_member_of_chat, add_member_to_chat, remove_member_to_chat
+    SaveSetup,
+    get_member_of_chat, add_member_to_chat, remove_member_to_chat, exit_chat, change_key_chat
 )
 from home.views import (
     home,
@@ -60,6 +62,7 @@ urlpatterns = [
     path('video/<str:pk>/like', LikeVideoView, name="video-like"),
     path('video/<str:pk>/comment', CommentVideoView, name="video-comment"),
     path('video/<str:pk>/comment-list', CommentView, name="video-comment-view"),
+    path('video/<str:pk>/increase', UpView, name="video-increase"),
 
     path('comment/<str:pk>', DeleteCommentView, name="delete-comment"),
     path('comment/<str:pk>/like', LikeCommentView, name="like-comment"),
@@ -79,8 +82,11 @@ urlpatterns = [
     path("chat/<str:pk>/member", get_member_of_chat, name="chat-member"),
     path("chat/<str:pk>/add", add_member_to_chat, name="chat-add"),
     path("chat/<str:pk>/remove", remove_member_to_chat, name="chat-remove"),
+    path("chat/<str:pk>/exit", exit_chat, name="chat-exit"),
+    path("chat/<str:pk>/change-key", change_key_chat, name="chat-key"),
 
     path("home", home, name="home"),
     path("home/followed", home_followed, name="home-followed"),
 
+    path("setup", SaveSetup.as_view(), name="setup")
 ]

@@ -166,7 +166,8 @@ window.addEventListener('scroll', loadMoreComment_child);
                     {{ props.data.user_infor.full_name }}
                 </router-link>
                 <p class="normal_text gray fs_15">{{ props.data.context }}</p>
-                <p class="normal_text gray fs_11">{{ props.data.create_time }}</p>
+                <p class="normal_text gray fs_11" v-if="props.data.create_time != '0'">{{ props.data.create_time }} {{store.translate("creator","duration") }}</p>
+                <p class="normal_text gray fs_11" v-else>{{ store.translate("creator", "now") }}</p>
             </div>
 
             <div class="display_flex justify_space align_center mg_t_5">
@@ -193,7 +194,10 @@ window.addEventListener('scroll', loadMoreComment_child);
             <div class="comment_list_child">
                 <div v-for="(child, index) in child_comment" :key="child.id" class="mg_t_5">
                     <CommentItemRecursive :data="child" />
-                    <p class="normal_text normal_color fs_11 poiter" v-if="index == child_comment.length-1 && child.have_more=='True'" @click="loadMoreComment_child">Load more</p>
+                    <p class="normal_text normal_color fs_11 poiter"
+                        v-if="index == child_comment.length - 1 && child.have_more == 'True'"
+                        @click="loadMoreComment_child">
+                        {{ store.translate("comment", "more") }}</p>
                 </div>
             </div>
         </div>

@@ -40,7 +40,7 @@ api_get_user_infor(props.username)
             <router-link to="/profile/self" v-else class="text normal_color no_decor fs_17">
                 @{{ profile.full_name }}
             </router-link>
-            <p class="normal_text normal_color fs_13">Follower: {{ profile.follower_count }}</p>
+            <p class="normal_text normal_color fs_13">{{store.translate("profile", "follower")}}: {{ profile.follower_count }}</p>
         </div>
         <VideoListComponent :active="'video'" :username="props.username" />
     </div>

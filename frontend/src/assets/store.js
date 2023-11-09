@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from "vue"
-
+import lang_temp from './lang.json' assert {type: 'json'}
 
 export const Store = defineStore('store', {
     state: () => ({
@@ -19,10 +18,18 @@ export const Store = defineStore('store', {
 
         loading: false,
 
+        lang: (localStorage.getItem('lang') === null) ? 'en' : localStorage.getItem('lang'),
+        theme: (localStorage.getItem('theme') === null) ? 'dark' : localStorage.getItem('theme'),
+
         comment_tag: {
             video_id: '',
             comment_id: '',
             full_name: ''
         }
-    })
+    }),
+    actions: {
+        translate(text1, text2) {
+            return lang_temp[this.lang][text1][text2]
+        },
+    }
 })

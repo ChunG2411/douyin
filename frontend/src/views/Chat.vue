@@ -2,7 +2,7 @@
 import { Store } from '../assets/store'
 import { socket_message, socket_chat } from '../function/socket.js'
 
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive } from 'vue'
 import axios from 'axios'
 import jwt_decode from "jwt-decode"
 import { vOnClickOutside } from '@vueuse/components'
@@ -15,6 +15,7 @@ const my_user = localStorage.getItem('username')
 const chat_list = ref([])
 const msg_list = ref([])
 const msg_page = ref('0')
+const chat_page = ref(0)
 const cur_chat = ref(null)
 const member_list = ref([])
 
@@ -29,6 +30,7 @@ const show_action_chat = ref(false)
 const show_add_chat_popup = ref(false)
 const show_add_member_popup = ref(false)
 const show_remove_member_popup = ref(false)
+const show_leader_member_popup = ref(false)
 
 const preview_image_upload = ref(null)
 const preview_modify_image_upload = ref(null)
@@ -74,7 +76,7 @@ socket_message.onmessage = function (e) {
             else {
                 for (let i = 0; i < chat_list.value.length; i++) {
                     if (chat_list.value[i].id == data.data.receiver) {
-                        chat_list.value[i].last_message = "new message"
+                        chat_list.value[i].last_message = store.translate("chat", "new")
                     }
                 }
             }
@@ -165,7 +167,8 @@ const submit_form = (id) => {
             // socket: chat
             socket_chat.send(JSON.stringify({
                 "sender": localStorage.getItem('username'),
-                "receiver": id
+                "receiver": id,
+                "content": form_msg.text
             }))
 
             form_msg.text = ''
@@ -254,7 +257,7 @@ const submit_new_chat = () => {
             chat_list.value.push(response.data.data)
             member_chat.value = []
             show_add_chat_popup.value = false
-            store.msg_success = "Create successful."
+            store.msg_success = store.translate("msg","create")
         })
         .catch(error => {
             try {
@@ -278,7 +281,7 @@ const delete_chat = (id) => {
                 }
             }
             cur_chat.value = null
-            store.msg_success = "Delete successful."
+            store.msg_success = store.translate("msg","delete")
         })
         .catch(error => {
             try {
@@ -328,7 +331,7 @@ const submit_add_new_member = () => {
 
     axios.post(`${store.domain}/api/chat/${cur_chat.value.id}/add`, form, header)
         .then(response => {
-            store.msg_success = response.data.data
+            store.msg_success = store.translate("msg","add")
         })
         .catch(error => {
             try {
@@ -355,8 +358,60 @@ const submit_remove_member = (username, index) => {
 
     axios.post(`${store.domain}/api/chat/${cur_chat.value.id}/remove`, form, header)
         .then(response => {
-            store.msg_success = response.data.data
+            store.msg_success = store.translate("msg","remove")
             member_list.value.splice(index, 1)
+        })
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
+}
+
+const change_key = (id) => {
+    show_member(id)
+    show_leader_member_popup.value = true
+}
+
+const submit_change_key = (username) => {
+    const header = {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }
+
+    const form = new FormData()
+    form.append('username', username)
+
+    axios.put(`${store.domain}/api/chat/${cur_chat.value.id}/change-key`, form, header)
+        .then(response => {
+            location.reload()
+            store.msg_success = store.translate("msg","change")
+        })
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
+}
+
+const exit_chat = (id) => {
+    const header = {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }
+    axios.get(`${store.domain}/api/chat/${id}/exit`, header)
+        .then(response => {
+            for (let i = 0; i < chat_list.value.length; i++) {
+                if (chat_list.value[i].id == id) {
+                    chat_list.value.splice(i, 1)
+                }
+            }
+            cur_chat.value = null
+            store.msg_success = store.translate("msg","exit")
         })
         .catch(error => {
             try {
@@ -389,7 +444,7 @@ const submit_modify_form = () => {
 
     axios.put(`${store.domain}/api/chat?id=${cur_chat.value.id}`, form, header)
         .then(response => {
-            store.msg_success = response.data.data
+            store.msg_success = store.translate("msg","modify")
             location.reload()
         })
         .catch(error => {
@@ -420,8 +475,38 @@ const close_popup = [() => {
     show_add_member_popup.value = false
     show_member_chat.value = false
     show_add_chat_popup.value = false
+    show_leader_member_popup.value = false
     add_member_list.value = []
 }]
+
+const loadMoreChat = (e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target
+    if ((scrollTop + offsetHeight) >= scrollHeight) {
+        const header = {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }
+        chat_page.value += 1
+        axios.get(`${store.domain}/api/chat?page=${chat_page.value}`, header)
+            .then(response => {
+                if (response.data.data.length == 0) {
+                    chat_page.value -= 1
+                }
+                else {
+                    for (let i = 0; i < response.data.data.length; i++) {
+                        chat_list.value.push(response.data.data[i])
+                    }
+                }
+            })
+            .catch(error => {
+                try {
+                    store.msg_error = error.response.data.msg
+                }
+                catch {
+                    store.msg_error = error
+                }
+            })
+    }
+}
 
 </script>
 
@@ -430,27 +515,32 @@ const close_popup = [() => {
         <div class="chat_left">
             <div class="display_flex gap5 align_center">
                 <button @click="add_new_chat">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="icon_17 white" />
+                    <font-awesome-icon :icon="['fas', 'plus']" class="icon_17 normal_color" />
                 </button>
 
-                <input class="input" type="text" placeholder="Enter chat name..." v-model="search_chat.request"
-                    @input="get_search_chat">
+                <input class="input" type="text" :placeholder="store.translate('header', 'search')"
+                    v-model="search_chat.request" @input="get_search_chat">
                 <div class="chat_search_board" v-if="search_chat.result.length > 0">
                     <div class="chat_search_board_item" v-for="result in search_chat.result"
                         @click="get_chat_detail(result)">
                         <img class="chat_avatar" :src="store.domain + result.avatar">
-                        <p class="text normal_color fs_15">{{ result.name }}</p>
+                        <p class="text normal_color fs_15" v-if="store.my_profile.username == result.user">{{ result.partner
+                        }}
+                        </p>
+                        <p class="text normal_color fs_15" v-else>{{ result.name }}</p>
                     </div>
                 </div>
             </div>
-            <div class="chat_left_list">
+            <div class="chat_left_list" v-on:scroll="loadMoreChat">
                 <div class="chat_left_list_item" v-for="chat in chat_list" :key="chat.id"
                     @click="msg_list = []; get_chat_detail(chat)">
                     <div>
                         <img class="chat_avatar" :src="store.domain + chat.avatar">
                     </div>
                     <div>
-                        <p class="text normal_color fs_15">{{ chat.name }}</p>
+                        <p class="text normal_color fs_15" v-if="store.my_profile.username == chat.user">{{ chat.partner }}
+                        </p>
+                        <p class="text normal_color fs_15" v-else>{{ chat.name }}</p>
                         <p class="normal_text gray fs_13">{{ chat.last_message }}</p>
                     </div>
                 </div>
@@ -462,9 +552,12 @@ const close_popup = [() => {
                 <div class="chat_right_content_top">
                     <div class="display_flex align_center gap10">
                         <img class="chat_avatar" :src="store.domain + cur_chat.avatar">
-                        <p class="text normal_color fs_17">{{ cur_chat.name }}</p>
+                        <p class="text normal_color fs_15" v-if="store.my_profile.username == cur_chat.user">{{
+                            cur_chat.partner
+                        }}</p>
+                        <p class="text normal_color fs_15" v-else>{{ cur_chat.name }}</p>
                     </div>
-                    <font-awesome-icon :icon="['fas', 'bars']" class="icon_25 white mg_r_5 poiter"
+                    <font-awesome-icon :icon="['fas', 'bars']" class="icon_25 normal_color mg_r_5 poiter"
                         @click="handle_action_chat" />
                 </div>
                 <div class="chat_right_content_bottom">
@@ -473,7 +566,7 @@ const close_popup = [() => {
                             <div class="display_flex justify_center">
                                 <p class="normal_text normal_color fs_11 poiter" @click="load_more_msg(cur_chat.id)"
                                     v-if="index == 0 && msg.have_more == 'True'">
-                                    Read more
+                                    {{ store.translate("comment", "more") }}
                                 </p>
                             </div>
                             <div class="msg_right" v-if="decoded.user_id == msg.sender">
@@ -494,29 +587,34 @@ const close_popup = [() => {
                             </div>
 
                             <div v-if="msg.reader.length < cur_chat.member.length">
-                                <p class="normal_text normal_color fs_11">{{ msg.reader.length }} member readed</p>
+                                <p class="normal_text normal_color fs_11">{{ msg.reader.length }} {{ store.translate("chat",
+                                    "readed") }}</p>
                             </div>
                             <div v-else-if="cur_chat.member.length == msg.reader.length && index == (msg_list.length - 1)">
-                                <p class="normal_text normal_color fs_11">{{ msg.reader.length }} member readed</p>
+                                <p class="normal_text normal_color fs_11">{{ msg.reader.length }} {{ store.translate("chat",
+                                    "readed") }}</p>
                             </div>
                         </div>
                     </div>
                     <form class="chat_right_content_bottom_form" @submit.prevent="submit_form(cur_chat.id)">
                         <input type="file" accept="image/*" @change="upload_image" id="upload_image" style="display: none;">
                         <label for="upload_image">
-                            <font-awesome-icon :icon="['fas', 'image']" class="icon_25 white" />
+                            <font-awesome-icon :icon="['fas', 'image']" class="icon_25 normal_color" />
                         </label>
-                        <input type="text" class="input" placeholder="Enter message..." v-model="form_msg.text">
+                        <input type="text" class="input" :placeholder="store.translate('chat', 'message')"
+                            v-model="form_msg.text">
 
                         <div class="chat_preveiw" v-if="preview_image_upload">
                             <img class="chat_preveiw_image" :src="preview_image_upload">
                             <div class="display_flex_column gap5">
-                                <label class="button fs_13" @click="remove_form_media">Remove</label>
-                                <label class="button fs_13" for="upload_image">Change</label>
+                                <label class="button fs_13" @click="remove_form_media">{{ store.translate("comment",
+                                    "remove") }}</label>
+                                <label class="button fs_13" for="upload_image">{{ store.translate("profile",
+                                    "change") }}</label>
                             </div>
                         </div>
                         <button type="submit" class="submit_icon">
-                            <font-awesome-icon :icon="['fas', 'paper-plane']" class="icon_20 white" />
+                            <font-awesome-icon :icon="['fas', 'paper-plane']" class="icon_20 normal_color" />
                         </button>
                     </form>
                 </div>
@@ -524,32 +622,58 @@ const close_popup = [() => {
             <div class="chat_right_action" v-if="show_action_chat">
                 <div class="display_flex_column align_center gap10">
                     <img class="chat_avatar_detail" :src="store.domain + cur_chat.avatar">
-                    <p class="text normal_color fs_17">{{ cur_chat.name }}</p>
+                    <p class="text normal_color fs_15" v-if="store.my_profile.username == cur_chat.user">{{ cur_chat.partner
+                    }}</p>
+                    <p class="text normal_color fs_15" v-else>{{ cur_chat.name }}</p>
                 </div>
                 <div class="chat_right_action_item">
                     <div class="display_flex gap10 align_center" v-if="cur_chat.type != 'single'">
-                        <font-awesome-icon :icon="['fas', 'pen-to-square']" class="icon_15 white" />
-                        <p class="normal_text normal_color fs_15" @click="modify_chat(cur_chat)">Modify</p>
+                        <font-awesome-icon :icon="['fas', 'pen-to-square']" class="icon_15 normal_color" />
+                        <p class="normal_text normal_color fs_15" @click="modify_chat(cur_chat)">
+                            {{ store.translate("profile", "modify") }}</p>
+                    </div>
+                    <div class="display_flex gap10 align_center" v-if="cur_chat.type == 'single'">
+                        <font-awesome-icon :icon="['fas', 'trash']" class="icon_15 normal_color" />
+                        <p class="normal_text normal_color fs_15" @click="delete_chat(cur_chat.id)">
+                            {{ store.translate("noti", "delete") }}</p>
+                    </div>
+                    <div class="display_flex gap10 align_center"
+                        v-if="cur_chat.type != 'single' && cur_chat.user == my_user">
+                        <font-awesome-icon :icon="['fas', 'trash']" class="icon_15 normal_color" />
+                        <p class="normal_text normal_color fs_15" @click="delete_chat(cur_chat.id)">
+                            {{ store.translate("noti", "delete") }}</p>
                     </div>
                     <div class="display_flex gap10 align_center">
-                        <font-awesome-icon :icon="['fas', 'trash']" class="icon_15 white" />
-                        <p class="normal_text normal_color fs_15" @click="delete_chat(cur_chat.id)">Delete</p>
-                    </div>
-                    <div class="display_flex gap10 align_center">
-                        <font-awesome-icon :icon="['fas', 'user-group']" class="icon white" />
+                        <font-awesome-icon :icon="['fas', 'user-group']" class="icon normal_color" />
                         <p class="normal_text normal_color fs_15"
                             @click="show_member_chat = true; show_member(cur_chat.id)">
-                            Member</p>
+                            {{ store.translate("chat", "member") }}</p>
                     </div>
                     <div class="display_flex gap10 align_center" v-if="cur_chat.type != 'single'">
-                        <font-awesome-icon :icon="['fas', 'user-plus']" class="icon white" />
-                        <p class="normal_text normal_color fs_15" @click="add_member_to_chat(cur_chat.id)">Add member
+                        <font-awesome-icon :icon="['fas', 'user-plus']" class="icon normal_color" />
+                        <p class="normal_text normal_color fs_15" @click="add_member_to_chat(cur_chat.id)">
+                            {{ store.translate("chat", "add_member") }}
                         </p>
                     </div>
-                    <div class="display_flex gap10 align_center" v-if="cur_chat.type != 'single'">
-                        <font-awesome-icon :icon="['fas', 'user-minus']" class="icon white" />
-                        <p class="normal_text normal_color fs_15" @click="remove_member_to_chat(cur_chat.id)">Remove
-                            member
+                    <div class="display_flex gap10 align_center"
+                        v-if="cur_chat.type != 'single' && store.my_profile.username == cur_chat.user">
+                        <font-awesome-icon :icon="['fas', 'user-minus']" class="icon normal_color" />
+                        <p class="normal_text normal_color fs_15" @click="remove_member_to_chat(cur_chat.id)">
+                            {{ store.translate("chat", "remove_member") }}
+                        </p>
+                    </div>
+                    <div class="display_flex gap10 align_center"
+                        v-if="cur_chat.type != 'single' && store.my_profile.username == cur_chat.user">
+                        <font-awesome-icon :icon="['fas', 'key']" class="icon normal_color" />
+                        <p class="normal_text normal_color fs_15" @click="change_key(cur_chat.id)">
+                            {{ store.translate("chat", "key") }}
+                        </p>
+                    </div>
+                    <div class="display_flex gap10 align_center"
+                        v-if="cur_chat.type != 'single'">
+                        <font-awesome-icon :icon="['fas', 'arrow-right-from-bracket']" class="icon normal_color" />
+                        <p class="normal_text normal_color fs_15" @click="exit_chat(cur_chat.id)">
+                            {{ store.translate("chat", "exit") }}
                         </p>
                     </div>
                 </div>
@@ -557,12 +681,12 @@ const close_popup = [() => {
         </div>
 
         <div class="popup"
-            v-if="show_add_chat_popup || show_member_chat || show_add_member_popup || show_remove_member_popup || show_modify_chat || store.loading">
+            v-if="show_add_chat_popup || show_member_chat || show_add_member_popup || show_remove_member_popup || show_modify_chat || show_leader_member_popup">
             <div class="popup_board" v-if="show_add_chat_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Create new chat</p>
+                <p class="text normal_color fs_17">{{ store.translate("chat", "add_chat") }}</p>
                 <div class="chat_popup_add">
                     <div>
-                        <p class="text normal_color fs_15">Select member: </p>
+                        <p class="text normal_color fs_15">{{ store.translate("chat", "select_member") }}</p>
                         <div class="chat_popup_add_board">
                             <div class="chat_popup_add_board_item" v-for="(member, index) in member_chat" :key="index"
                                 @click="member_chat.splice(index, 1)">
@@ -572,7 +696,7 @@ const close_popup = [() => {
                         </div>
                     </div>
                     <div>
-                        <p class="text normal)color fs_15">List follower:</p>
+                        <p class="text normal_color fs_15">{{ store.translate("chat", "list_follower") }}</p>
                         <div class="chat_popup_add_board">
                             <div class="chat_popup_add_board_item" v-for="user in follower" @click="member_chat.push(user)">
                                 <img class="chat_avatar" :src="store.domain + user.avatar">
@@ -581,33 +705,111 @@ const close_popup = [() => {
                         </div>
                     </div>
                     <div class="display_flex justify_center">
-                        <button @click="submit_new_chat" class="fs_17">Create</button>
+                        <button @click="submit_new_chat" class="fs_17">{{ store.translate("chat", "create") }}</button>
                     </div>
                 </div>
             </div>
 
             <div class="popup_board" v-if="show_member_chat" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Member</p>
+                <p class="text normal_color fs_17">{{ store.translate("chat", "member") }}</p>
                 <div class="chat_popup_member">
                     <div class="chat_popup_member_item" v-for="member in member_list" :key="member.id">
                         <router-link :to="{ name: 'guest_profile', params: { username: member.username } }"
-                            v-if="member.username != my_user" class="display_flex gap20 align_center no_decor">
+                            v-if="member.username != my_user && cur_chat.user != member.username"
+                            class="display_flex gap20 align_center no_decor">
                             <img class="chat_avatar" :src="store.domain + member.avatar">
                             <p class="text normal_color fs_15">{{ member.full_name }}</p>
                         </router-link>
-                        <router-link to="/profile/self" v-else class="display_flex gap20 align_center no_decor">
+
+                        <router-link :to="{ name: 'guest_profile', params: { username: member.username } }"
+                            v-else-if="member.username != my_user && cur_chat.user == member.username"
+                            class="display_flex gap20 align_center no_decor">
                             <img class="chat_avatar" :src="store.domain + member.avatar">
-                            <p class="text normal_color fs_15">{{ member.full_name }} (You)</p>
+                            <div class="display_flex gap10 align_center">
+                                <p class="text normal_color fs_15">{{ member.full_name }}</p>
+                                <font-awesome-icon :icon="['fas', 'key']" class="icon normal_color" />
+                            </div>
+                        </router-link>
+
+                        <router-link to="/profile/self"
+                            v-else-if="member.username == my_user && cur_chat.user != member.username"
+                            class="display_flex gap20 align_center no_decor">
+                            <img class="chat_avatar" :src="store.domain + member.avatar">
+                            <p class="text normal_color fs_15">{{ member.full_name }} {{ store.translate("chat", "you") }}
+                            </p>
+                        </router-link>
+
+                        <router-link to="/profile/self"
+                            v-else-if="member.username == my_user && cur_chat.user == member.username"
+                            class="display_flex gap20 align_center no_decor">
+                            <img class="chat_avatar" :src="store.domain + member.avatar">
+                            <div class="display_flex gap10 align_center">
+                                <p class="text normal_color fs_15">{{ member.full_name }} {{ store.translate("chat", "you")
+                                }}</p>
+                                <font-awesome-icon :icon="['fas', 'key']" class="icon normal_color" />
+                            </div>
                         </router-link>
                     </div>
                 </div>
             </div>
 
+            <div class="popup_board" v-if="show_leader_member_popup" v-on-click-outside="close_popup">
+                <p class="text normal_color fs_17">{{ store.translate("chat", "member") }}</p>
+                <div class="chat_popup_member">
+                    <div class="chat_popup_member_item" v-for="member in member_list" :key="member.id">
+                        <div v-if="member.username != my_user && cur_chat.user != member.username"
+                            class="display_flex align_center justify_space no_decor width_100">
+                            <div class="display_flex gap20 align_center">
+                                <img class="chat_avatar" :src="store.domain + member.avatar">
+                                <p class="text normal_color fs_15">{{ member.full_name }}</p>
+                            </div>
+                            <div class="display_flex gap10 align_center">
+                                <router-link :to="{ name: 'guest_profile', params: { username: member.username } }"
+                                    class="button no_decor fs_13">
+                                    {{ store.translate("search", "view") }}
+                                </router-link>
+                                <button class="fs_13" @click="submit_change_key(member.username)">{{ store.translate("chat",
+                                    "change")
+                                }}</button>
+                            </div>
+                        </div>
+
+                        <router-link :to="{ name: 'guest_profile', params: { username: member.username } }"
+                            v-else-if="member.username != my_user && cur_chat.user == member.username"
+                            class="display_flex gap20 align_center no_decor">
+                            <img class="chat_avatar" :src="store.domain + member.avatar">
+                            <div class="display_flex gap10 align_center">
+                                <p class="text normal_color fs_15">{{ member.full_name }}</p>
+                                <font-awesome-icon :icon="['fas', 'key']" class="icon normal_color" />
+                            </div>
+                        </router-link>
+
+                        <div v-else-if="member.username == my_user && cur_chat.user != member.username"
+                            class="display_flex align_center justify_space no_decor width_100">
+                            <div class="display_flex gap20 align_center">
+                                <img class="chat_avatar" :src="store.domain + member.avatar">
+                                <p class="text normal_color fs_15">{{ member.full_name }}</p>
+                            </div>
+                        </div>
+
+                        <div v-else-if="member.username == my_user && cur_chat.user == member.username"
+                            class="display_flex gap20 align_center no_decor">
+                            <img class="chat_avatar" :src="store.domain + member.avatar">
+                            <div class="display_flex gap10 align_center">
+                                <p class="text normal_color fs_15">{{ member.full_name }} {{ store.translate("chat", "you")
+                                }}</p>
+                                <font-awesome-icon :icon="['fas', 'key']" class="icon normal_color" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="popup_board" v-if="show_add_member_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs-17">Add new member</p>
+                <p class="text normal_color fs-17">{{ store.translate("chat", "add_member") }}</p>
                 <div class="chat_popup_add">
                     <div>
-                        <p class="text normal_color fs_15">New member</p>
+                        <p class="text normal_color fs_15">{{ store.translate("chat", "new_member") }}</p>
                         <div class="chat_popup_add_board">
                             <div class="chat_popup_add_board_item" v-for="(member, index) in add_member_list"
                                 @click="add_member_list.splice(index, 1)">
@@ -617,7 +819,7 @@ const close_popup = [() => {
                         </div>
                     </div>
                     <div>
-                        <p class="text normal_color fs_15">Follower</p>
+                        <p class="text normal_color fs_15">{{ store.translate("chat", "list_follower") }}</p>
                         <div class="chat_popup_add_board">
                             <div class="chat_popup_add_board_item" v-for="user in follower" :key="user.id"
                                 @click="add_member_list.push(user)">
@@ -627,13 +829,14 @@ const close_popup = [() => {
                         </div>
                     </div>
                     <div class="display_flex justify_center">
-                        <button @click="submit_add_new_member" class="fs_17">Submit</button>
+                        <button @click="submit_add_new_member" class="fs_17">{{ store.translate("profile",
+                            "submit") }}</button>
                     </div>
                 </div>
             </div>
 
             <div class="popup_board" v-if="show_remove_member_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Remove member</p>
+                <p class="text normal_color fs_17">{{ store.translate("chat", "remove_member") }}</p>
                 <div class="chat_popup_member">
                     <div class="chat_popup_member_item" v-for="(member, index) in member_list" :key="index">
                         <div class="display_flex align_center justify_space width_100">
@@ -642,38 +845,35 @@ const close_popup = [() => {
                                 <p class="text normal_color fs_15">{{ member.full_name }}</p>
                             </div>
                             <button @click="submit_remove_member(member.username, index)"
-                                v-if="my_user != member.username">Remove</button>
+                                v-if="my_user != member.username">{{ store.translate("comment", "remove") }}</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="popup_board" v-if="show_modify_chat" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Modify</p>
+                <p class="text normal_color fs_17">{{ store.translate("profile", "modify") }}</p>
                 <form @submit.prevent="submit_modify_form" class="chat_popup_modify">
                     <div>
-                        <p class="text normal_color fs_15">Name</p>
+                        <p class="text normal_color fs_15">{{ store.translate("chat", "name") }}</p>
                         <input type="text" class="input mg_l_10 mg_t_10" v-model="form_modify.name">
                     </div>
                     <div>
-                        <p class="text normal_color fs_15">Avatar</p>
+                        <p class="text normal_color fs_15">{{ store.translate("profile", "avatar") }}</p>
                         <div class="display_flex_column gap20 mg_t_10 align_center">
                             <img class="chat_avatar_detail" :src="store.domain + cur_chat.avatar"
                                 v-if="!preview_modify_image_upload">
                             <img class="chat_avatar_detail" :src="preview_modify_image_upload" v-else>
                             <input type="file" accept="image/*" style="display: none;" id="modify_upload_avatar"
                                 @change="change_avatar_chat">
-                            <label for="modify_upload_avatar" class="button fs_15">Change</label>
+                            <label for="modify_upload_avatar" class="button fs_15">{{ store.translate("profile",
+                                "change") }}</label>
                         </div>
                     </div>
                     <div class="display_flex justify_center">
-                        <button type="submit" class="fs_17">Submit</button>
+                        <button type="submit" class="fs_17">{{ store.translate("profile", "submit") }}</button>
                     </div>
                 </form>
-            </div>
-
-            <div class="popup_board" v-if="store.loading">
-                <p class="text normal_color fs_15">Loading...</p>
             </div>
         </div>
     </div>
@@ -681,8 +881,8 @@ const close_popup = [() => {
 
 <style>
 .chat {
-    width: 90%;
-    height: 90%;
+    width: 98%;
+    height: 98%;
     display: flex;
     gap: 15px;
     padding: 10px;

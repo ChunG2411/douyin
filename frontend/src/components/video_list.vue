@@ -89,24 +89,26 @@ const scrollToElement = (element) => {
     <div class="video_list" v-on:scroll="loadMoreVideo">
         <div ref="top_page" style="display: none;"></div>
         <div class="video_card" v-if="video_list" v-for="video in video_list" :key="video.id">
-            <router-link class="normal_text normal_color no_decor" :to="{ name: 'video', params: { id: video.id } }">
+            <router-link class="no_decor" :to="{ name: 'video', params: { id: video.id } }">
                 <video class="profile_video_card" :src="store.domain + video.video" />
                 <div class="card_content">
                     <div>
-                        <p class="normal_text normal_color fs_13">{{ video.descrip.slice(0,15) }}...</p>
+                        <p class="video_text_2 fs_13 shadow" v-if="video.descrip.length > 20">{{
+                            video.descrip.slice(0, 15) }}...</p>
+                        <p class="video_text_2 fs_13 shadow" v-else>{{ video.descrip }}</p>
                     </div>
                     <div class="card_content_action">
                         <div>
                             <font-awesome-icon :icon="['fas', 'heart']" class="icon white" />
-                            <p class="normal_text normal_color fs_13">{{ video.like_count }}</p>
+                            <p class="video_text_2 fs_13 shadow">{{ video.like_count }}</p>
                         </div>
                         <div>
                             <font-awesome-icon :icon="['fas', 'comment']" class="icon white" />
-                            <p class="normal_text normal_color fs_13">{{ video.comment_count }}</p>
+                            <p class="video_text_2 fs_13 shadow">{{ video.comment_count }}</p>
                         </div>
                         <div>
                             <font-awesome-icon :icon="['fas', 'star']" class="icon white" />
-                            <p class="normal_text normal_color fs_13">{{ video.save_count }}</p>
+                            <p class="video_text_2 fs_13 shadow">{{ video.save_count }}</p>
                         </div>
                     </div>
                 </div>
@@ -157,13 +159,14 @@ const scrollToElement = (element) => {
     width: 88%;
     padding: 5px 10px;
 }
-.card_content_action{
+
+.card_content_action {
     display: flex;
     justify-content: space-between;
 }
-.card_content_action div{
+
+.card_content_action div {
     display: flex;
     gap: 2px;
     align-items: center;
-}
-</style>
+}</style>

@@ -143,7 +143,7 @@ const handle_show_component = (target) => {
     <div class="video_view" v-if="video">
         <div class="video_view_left">
             <div class="video_view_video">
-                <VideoComponent :src="video.video"/>
+                <VideoComponent :src="video.video" :id="video.id" />
             </div>
 
             <div class="video_view_action">
@@ -153,43 +153,47 @@ const handle_show_component = (target) => {
                 <div @click="like_video" class="display_flex_column align_center poiter">
                     <font-awesome-icon :icon="['fas', 'heart']" class="icon_25 red" v-if="video.liked" />
                     <font-awesome-icon :icon="['fas', 'heart']" class="icon_25 white" v-else />
-                    <p class="normal_text normal_color fs_15">{{ video.like_count }}</p>
+                    <p class="video_text_2 fs_15 shadow">{{ video.like_count }}</p>
                 </div>
 
                 <div @click="handle_show_component('comment')" class="display_flex_column align_center poiter">
                     <font-awesome-icon :icon="['fas', 'message']" class="icon_20 white" />
-                    <p class="normal_text normal_color fs_15">{{ video.comment_count }}</p>
+                    <p class="video_text_2 fs_15 shadow">{{ video.comment_count }}</p>
                 </div>
 
                 <div @click="save_video" class="display_flex_column align_center poiter">
                     <font-awesome-icon :icon="['fas', 'star']" class="icon_20 yellow" v-if="video.saved" />
                     <font-awesome-icon :icon="['fas', 'star']" class="icon_20 white" v-else />
-                    <p class="normal_text normal_color fs_15">{{ video.save_count }}</p>
+                    <p class="video_text_2 fs_15 shadow">{{ video.save_count }}</p>
                 </div>
             </div>
 
             <div class="video_view_infor">
                 <div>
-                    <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }"
-                        v-if="my_user != video.user_infor.username" class="text normal_color fs_17 no_decor shadow">
-                        {{ video.user_infor.full_name }}
-                    </router-link>
-                    <router-link to="/profile/self" v-else class="text normal_color fs_17 no_decor shadow">
-                        {{ video.user_infor.full_name }}
-                    </router-link>
-                    <p class="normal_text normal_color fs_15 shadow">{{ video.descrip }}</p>
+                    <div class="display_flex align_center gap10">
+                        <router-link :to="{ name: 'guest_profile', params: { username: video.user_infor.username } }"
+                            v-if="my_user != video.user_infor.username" class="video_text_1 fs_17 no_decor shadow">
+                            {{ video.user_infor.full_name }}
+                        </router-link>
+                        <router-link to="/profile/self" v-else class="video_text_1 fs_17 no_decor shadow">
+                            {{ video.user_infor.full_name }}
+                        </router-link>
+                        <p class="video_text_2 fs_10 shadow">-{{ video.create_time }} {{ store.translate("creator",
+                                    "duration") }}-</p>
+                    </div>
+                    <p class="video_text_2 fs_15 shadow">{{ video.descrip }}</p>
                 </div>
 
-                <router-link :to="{ name: 'music', params: { id: video.music } }" v-if="video.music">
-                    <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar">
+                <router-link :to="{ name: 'music', params: { id: video.music } }" v-if="video.music_avatar">
+                    <img class="avatar_music_icon" :src="store.domain + video.music_avatar">
                 </router-link>
-                <img class="profile_avatar_video" :src="store.domain + video.user_infor.avatar" v-else>
+                <img class="avatar_music_icon" :src="store.domain + video.user_infor.avatar" v-else>
             </div>
         </div>
 
         <div class="video_view_right" v-if="show_component.comment || show_component.profile">
             <div class="right_board" v-if="show_component.comment">
-                <p class="text normal_color fs_17 pd_b_10">Comment</p>
+                <p class="text normal_color fs_17 pd_b_10">{{ store.translate("comment", "comment") }}</p>
                 <CommentComponent :video_id="video.id" />
             </div>
             <div class="right_board" v-if="show_component.profile">
@@ -207,8 +211,8 @@ const handle_show_component = (target) => {
 
 <style>
 .video_view {
-    width: 90%;
-    height: 90%;
+    width: 98%;
+    height: 98%;
     margin-left: 10px;
     border-radius: 10px;
     display: flex;
@@ -226,7 +230,7 @@ const handle_show_component = (target) => {
     position: relative;
 }
 
-.video_view_video{
+.video_view_video {
     height: 100%;
     width: 100%;
 }

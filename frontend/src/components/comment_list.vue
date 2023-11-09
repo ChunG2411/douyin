@@ -127,15 +127,15 @@ window.addEventListener('scroll', loadMoreComment);
         <div class="comment_list_item">
             <div v-for="(comment, index) in comment_list" :key="comment.id">
                 <CommentItem :data="comment" />
-                <p class="normal_text normal_color fs_11 poiter" v-if="index == comment_list.length-1 && comment.have_more=='True'" @click="loadMoreComment">Load more</p>
+                <p class="normal_text normal_color fs_11 poiter" v-if="index == comment_list.length-1 && comment.have_more=='True'" @click="loadMoreComment">{{store.translate("comment", "more")}}</p>
             </div>
         </div>
         <form @submit.prevent="comment_video" v-if="store.is_login" class="comment_form">
             <span v-if="store.comment_tag.video_id == props.video_id" class="display_flex gap5 align_center">
                 <p class="normal_text normal_color fs_13">to @{{ store.comment_tag.full_name }}</p>
-                <p class="button normal_text fs_13" @click="remove_parent">remove</p>
+                <p class="button normal_text fs_13" @click="remove_parent">{{store.translate("comment", "remove")}}</p>
             </span>
-            <input class="input" type="text" placeholder="Input comment ..." v-model="comment_form">
+            <input class="input" type="text" :placeholder="store.translate('comment', 'input')" v-model="comment_form">
         </form>
     </div>
 </template>

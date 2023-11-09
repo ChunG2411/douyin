@@ -1,8 +1,14 @@
 <script setup>
 import { defineProps, ref, onMounted } from 'vue'
+import { Store } from '../assets/store'
+
+import axios from 'axios'
+
+const store = Store()
 
 const props = defineProps({
-    src: String
+    src: String,
+    id: String
 })
 
 const player = ref(null)
@@ -46,7 +52,7 @@ onMounted(() => {
         else video_mute.value = true
     }, false)
 
-    player.value.addEventListener('ended', function () { this.play(); }, false)
+    player.value.addEventListener('ended', function () { this.play() }, false)
 })
 
 
@@ -94,26 +100,38 @@ function updatetime() {
     durtime.value = durmin + ':' + dursec
 }
 
+const increaseView = () => {
+    axios.get(`${store.domain}/api/video/${props.id}/increase`)
+        .catch(error => {
+            try {
+                store.msg_error = error.response.data.msg
+            }
+            catch {
+                store.msg_error = error
+            }
+        })
+}
+
 </script>
 
 <template>
-    <video class="video" id="video-element" :src="props.src" autoplay></video>
+    <video class="video" id="video-element" :src="props.src" autoplay @ended="increaseView"></video>
     <div class="controls">
         <progress class="controls_bar mg_b_5" id='progress-bar' min='0' max='100' value='0'>0% played</progress>
         <div class="controls_button">
             <div class="display_flex gap10 align_center">
-                <font-awesome-icon :icon="['fas', 'play']" class="icon_15" id="btnPlayPause" v-if="video_play"
+                <font-awesome-icon :icon="['fas', 'play']" class="icon_15 white" id="btnPlayPause" v-if="video_play"
                     @click="playPauseVideo()" />
-                <font-awesome-icon :icon="['fas', 'pause']" class="icon_15" id="btnPlayPause" v-else
+                <font-awesome-icon :icon="['fas', 'pause']" class="icon_15 white" id="btnPlayPause" v-else
                     @click="playPauseVideo()" />
-                <p class="normal_text normal_color fs_15">{{ curtime }} / {{ durtime }}</p>
+                <p class="video_text_2 fs_15">{{ curtime }} / {{ durtime }}</p>
             </div>
             <div class="display_flex gap10 align_center">
                 <input type="range" id="volume-bar" min="0" max="1" step="0.1" value="1">
-                <font-awesome-icon :icon="['fas', 'volume-high']" class="icon_15" id="btnMute" @click='muteVolume()'
-                    v-if="video_mute" />
-                <font-awesome-icon :icon="['fas', 'volume-xmark']" class="icon_15" id="btnMute" @click='muteVolume()'
-                    v-else />
+                <font-awesome-icon :icon="['fas', 'volume-high']" class="icon_15 white" id="btnMute"
+                    @click='muteVolume()' v-if="video_mute" />
+                <font-awesome-icon :icon="['fas', 'volume-xmark']" class="icon_15 white" id="btnMute"
+                    @click='muteVolume()' v-else />
             </div>
         </div>
     </div>

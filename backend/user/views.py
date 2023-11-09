@@ -11,6 +11,7 @@ from django.core.validators import validate_email
 import datetime
 from moviepy.editor import *
 import os
+import math
 
 from social_network.config import response_error, response_success
 from .models import User, UserStatus, UserFollower, UserFollowed
@@ -196,7 +197,6 @@ def user_online(request):
     status = UserStatus.objects.get_or_create(user=request.user)
     status[0].status = True
     status[0].save()
-
     return Response(response_success("User is online."), status=200)
 
 
@@ -206,7 +206,6 @@ def user_offline(request):
     status = UserStatus.objects.get_or_create(user=request.user)
     status[0].status = False
     status[0].save()
-
     return Response(response_success("User is offline."), status=200)
 
 
@@ -235,15 +234,9 @@ class UserVideoView(APIView):
         return Response(response_success(serializers.data), status=200)
 
     def post(self, request, username):
-        user = self.get_user(username)
-        if not user:
-            return Response(response_error("User don't exist."), status=400)
-        if request.user != user:
-            return Response(response_error("Check user login."), status=400)
-
         request_copy = request.POST.copy()
         request_copy['video'] = request.FILES.copy()['video']
-        request_copy['user'] = user.id
+        request_copy['user'] = request.user.id
         serializer = VideoSerializer(data=request_copy)
         if serializer.is_valid():
             serializer.save()
@@ -253,24 +246,33 @@ class UserVideoView(APIView):
                 path_video = serializer.data['video'][1:]
                 path_music = path_video.replace(
                     'video/', 'music/').replace('.mp4', '.mp3')
+                
                 video_upload = VideoFileClip(get_absolute_media_path(path_video))
-                video_upload.audio.write_audiofile(get_absolute_media_path(path_music))
-                video_upload.close()
+                video_volumn = float(request_copy['video_volumn']) if request_copy['video_volumn'] else 1
+                video_handle = video_upload.volumex(video_volumn)
+
+                video_handle.audio.write_audiofile(get_absolute_media_path(path_music))
+                video_handle.write_videofile(get_absolute_media_path(path_video.replace('.mp4', '1.mp4')))
+                video_handle.close()
 
                 try:
-                    music = Music.objects.create(
-                        user=user, music=path_music.replace('media/', ''))
+                    music = Music.objects.create(user=request.user, music=path_music.replace('media/', ''))
                     video = Video.objects.get(id=serializer.data['id'])
                     video.music = music
+                    video.video = get_absolute_media_path(path_video.replace('.mp4', '1.mp4'))
                     video.save()
+                    os.remove(get_absolute_media_path(path_video))
+
                 except Exception as e:
                     Video.objects.get(id=serializer.data['id']).delete()
                     try:
                         os.remove(get_absolute_media_path(path_video))
+                        os.remove(get_absolute_media_path(path_video.replace('.mp4', '1.mp4')))
                         os.remove(get_absolute_media_path(path_music))
                     except Exception:
                         pass
-                    return Response(response_error("Error convert to mp3."), status=400)
+                    return Response(response_error(str(e)), status=400)
+            
             else:
                 music_id = request_copy['music']
                 if music_id == "":
@@ -279,16 +281,51 @@ class UserVideoView(APIView):
                 try:
                     music = Music.objects.get(id=music_id)
                     video = Video.objects.get(id=serializer.data['id'])
+
+                    path_video = video.video.url[1:]
+                    path_music = music.music.url[1:]
+
+                    video_volumn = float(request_copy['video_volumn']) if request_copy['video_volumn'] else 1
+                    music_volumn = float(request_copy['music_volumn']) if request_copy['music_volumn'] else 1
+
+                    video_upload = VideoFileClip(get_absolute_media_path(path_video))
+                    music_select = AudioFileClip(get_absolute_media_path(path_music))
+
+                    video_handle = video_upload.volumex(video_volumn)
+                    music_handle = music_select.volumex(music_volumn)
+
+                    if music_handle.end > video_handle.end:
+                        music_clip = music_handle.subclip(0, video_handle.end)
+                    else:
+                        x =  math.ceil(video_handle.end / music_handle.end)
+                        mixed = []
+                        for i in range(x):
+                            if i==0:
+                                mixed.append(music_handle)
+                            else:
+                                mixed.append(music_handle.set_start(music_handle.end*i))
+                        mixed_music = CompositeAudioClip(mixed)
+                        music_clip = mixed_music.subclip(0, video_handle.end)
+
+                    final_music = CompositeAudioClip([video_handle.audio, music_clip])
+                    final = video_handle.set_audio(final_music)
+                    final.write_videofile(get_absolute_media_path(path_video.replace('.mp4', '1.mp4')))
+
                     video.music = music
+                    video.video = path_video.replace('.mp4', '1.mp4').replace('media/','')
                     video.save()
+                    os.remove(get_absolute_media_path(path_video))
+
                 except Exception as e:
                     Video.objects.get(id=serializer.data['id']).delete()
                     try:
                         os.remove(get_absolute_media_path(path_video))
+                        os.remove(get_absolute_media_path(path_video.replace('.mp4', '1.mp4')))
                         os.remove(get_absolute_media_path(path_music))
                     except Exception:
                         pass
                     return Response(response_error(str(e)), status=400)
+                
             video_serializer = VideoSerializer(video)
             return Response(response_success(video_serializer.data), status=201)
         else:
@@ -416,3 +453,4 @@ def GetUserFollower(request, username):
     serializers = UserDetailSerializer(user_follower, many=True)
 
     return Response(response_success(serializers.data), status=200)
+

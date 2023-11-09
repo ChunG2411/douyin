@@ -204,8 +204,8 @@ onMounted(() => {
                         <p class="username gray fs_13" @click="show_username_popup = true">@{{ profile.infor.username }}</p>
                     </div>
                     <div class="profile_follow_infor">
-                        <button @click="show_followed" class="fs_13">Followed: {{ profile.infor.followed_count }}</button>
-                        <button @click="show_follower" class="fs_13">Follower: {{ profile.infor.follower_count }}</button>
+                        <button @click="show_followed" class="fs_13">{{store.translate("profile", "followed")}}: {{ profile.infor.followed_count }}</button>
+                        <button @click="show_follower" class="fs_13">{{store.translate("profile", "follower")}}: {{ profile.infor.follower_count }}</button>
                     </div>
                     <div>
                         <div class="display_flex gap10">
@@ -229,8 +229,8 @@ onMounted(() => {
             </div>
             <div class="profile_infor_right">
                 <button @click="show_modify_popup = true" class="display_flex gap10 align_center">
-                    <font-awesome-icon :icon="['fas', 'pen']" class="icon white"/>
-                    <p class="normal_text normal_colo fs_15">Modify</p>
+                    <font-awesome-icon :icon="['fas', 'pen']" class="icon normal_color"/>
+                    <p class="normal_text normal_colo fs_15">{{store.translate("profile", "modify")}}</p>
                 </button>
             </div>
         </div>
@@ -238,13 +238,13 @@ onMounted(() => {
         <div class="profile_video">
             <div class="profile_video_tag">
                 <div class="tag_item active_tag" id="video">
-                    <p class="text normal_color fs_15">Create</p>
+                    <p class="text normal_color fs_15">{{store.translate("profile", "create")}}</p>
                 </div>
                 <div class="tag_item" id="like">
-                    <p class="text normal_color fs_15">Like</p>
+                    <p class="text normal_color fs_15">{{store.translate("profile", "like")}}</p>
                 </div>
                 <div class="tag_item" id="save">
-                    <p class="text normal_color fs_15">Save</p>
+                    <p class="text normal_color fs_15">{{store.translate("profile", "save")}}</p>
                 </div>
             </div>
             <VideoListComponent :active="profile.active_tab" :username="store.my_profile.username" />
@@ -253,48 +253,48 @@ onMounted(() => {
         <div class="popup"
             v-if="show_modify_popup || show_followed_popup || show_follower_popup || show_avatar_popup || show_username_popup">
             <div class="popup_board" id="modify_popup" v-if="show_modify_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Modify</p>
+                <p class="text normal_color fs_17">{{store.translate("profile", "modify")}}</p>
                 <form @submit.prevent="modify_submit" class="modify_form">
                     <div class="display_flex gap5 align_center justify_space mg_t_5 mg_b_5">
-                        <p class="normal_text normal_color fs_15">Email</p>
+                        <p class="normal_text normal_color fs_15">{{store.translate("authen", "email")}}</p>
                         <input class="input" type="text" v-model="modify_form.email" required>
                     </div>
                     <div class="display_flex gap5 align_center justify_space mg_b_5">
-                        <p class="normal_text normal_color fs_15">First name</p>
+                        <p class="normal_text normal_color fs_15">{{store.translate("authen", "first_name")}}</p>
                         <input class="input" type="text" v-model="modify_form.first_name" required>
                     </div>
                     <div class="display_flex gap5 align_center justify_space mg_b_5">
-                        <p class="normal_text normal_color fs_15">Last name</p>
+                        <p class="normal_text normal_color fs_15">{{store.translate("authen", "last_name")}}</p>
                         <input class="input" type="text" v-model="modify_form.last_name" required>
                     </div>
                     <div class="display_flex gap5 align_center justify_space mg_b_5">
-                        <p class="normal_text normal_color fs_15">Gender</p>
+                        <p class="normal_text normal_color fs_15">{{store.translate("authen", "gender")}}</p>
                         <select class="select" name="gender" v-model="modify_form.gender">
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
+                            <option value="Male">{{store.translate("authen", "male")}}</option>
+                            <option value="Female">{{store.translate("authen", "female")}}</option>
+                            <option value="Other">{{store.translate("authen", "other")}}</option>
                         </select>
                     </div>
                     <div class="display_flex gap5 align_center justify_space mg_b_5">
-                        <p class="normal_text normal_color fs_15">Birth day</p>
+                        <p class="normal_text normal_color fs_15">{{store.translate("profile", "birth")}}</p>
                         <input class="input" type="date" v-model="modify_form.birth">
                     </div>
                     <div class="display_flex gap5 align_center justify_space mg_b_5">
-                        <p class="normal_text normal_color fs_15">Address</p>
+                        <p class="normal_text normal_color fs_15">{{store.translate("profile", "address")}}</p>
                         <input class="input" type="text" v-model="modify_form.address">
                     </div>
                     <div class="display_flex gap5 align_center justify_space mg_b_5">
-                        <p class="normal_text normal_color fs_15">Introduce</p>
+                        <p class="normal_text normal_color fs_15">{{store.translate("profile", "intro")}}</p>
                         <input class="input" type="text" v-model="modify_form.introduce">
                     </div>
                     <div class="display_flex justify_center mg_t_5 mg_b_5">
-                        <button type="submit" class="fs_15">Submit</button>
+                        <button type="submit" class="fs_15">{{store.translate("profile", "submit")}}</button>
                     </div>
                 </form>
             </div>
 
             <div class="popup_board" id="followed_popup" v-if="show_followed_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Followed</p>
+                <p class="text normal_color fs_17">{{store.translate("profile", "followed")}}</p>
                 <div class="follow_board">
                     <div class="follow_board_item poiter" v-for="user in profile.followed">
                         <div class="follow_context">
@@ -303,13 +303,13 @@ onMounted(() => {
                         </div>
                         <button>
                             <router-link class="text normal_color fs_15"
-                                :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
+                                :to="{ name: 'guest_profile', params: { username: user.username } }">{{store.translate("search", "view")}}</router-link>
                         </button>
                     </div>
                 </div>
             </div>
             <div class="popup_board" id="follower_popup" v-if="show_follower_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Follower</p>
+                <p class="text normal_color fs_17">{{store.translate("profile", "follower")}}</p>
                 <div class="follow_board">
                     <div class="follow_board_item poiter" v-for="user in profile.follower">
                         <div class="follow_context">
@@ -318,32 +318,32 @@ onMounted(() => {
                         </div>
                         <button>
                             <router-link class="text normal_color fs_15"
-                                :to="{ name: 'guest_profile', params: { username: user.username } }">View</router-link>
+                                :to="{ name: 'guest_profile', params: { username: user.username } }">{{store.translate("search", "view")}}</router-link>
                         </button>
                     </div>
                 </div>
             </div>
 
             <div class="popup_board" id="avatar_popup" v-if="show_avatar_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Avatar</p>
+                <p class="text normal_color fs_17">{{store.translate("profile", "avatar")}}</p>
 
                 <form @submit.prevent="modify_submit" class="display_flex_column gap5 align_center">
                     <img class="show_profile_avatar" :src="store.domain + profile.infor?.avatar"
                         v-if="!preview_image_upload">
                     <img class="show_profile_avatar" :src="preview_image_upload" v-else>
 
-                    <label class="button fs_15" for="image-upload">Change</label>
+                    <label class="button fs_15" for="image-upload">{{store.translate("profile", "change")}}</label>
                     <input type="file" id="image-upload" accept="image/*" style="display: none;" @change="upload_image">
-                    <button type="submit" class="fs_15">Submit</button>
+                    <button type="submit" class="fs_15">{{store.translate("profile", "submit")}}</button>
                 </form>
             </div>
 
             <div class="popup_board" id="username_popup" v-if="show_username_popup" v-on-click-outside="close_popup">
-                <p class="text normal_color fs_17">Username</p>
+                <p class="text normal_color fs_17">{{store.translate("profile", "username")}}</p>
 
                 <form @submit.prevent="modify_submit" class="display_flex_column gap5 align_center">
                     <input class="input" type="text" v-model="modify_form.username">
-                    <button type="submit" class="fs_15">Submit</button>
+                    <button type="submit" class="fs_15">{{store.translate("profile", "submit")}}</button>
                 </form>
             </div>
         </div>
@@ -352,8 +352,8 @@ onMounted(() => {
 
 <style>
 .profile {
-    width: 87%;
-    height: 90%;
+    width: 98%;
+    height: 100%;
 }
 
 .profile_infor {

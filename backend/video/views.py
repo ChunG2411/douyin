@@ -213,3 +213,16 @@ def CommentView(request, pk):
 
     except Exception as e:
         return Response(response_error(str(e)), status=400)
+
+
+@api_view(["GET"])
+def UpView(request, pk):
+    try:
+        video = Video.objects.get(id=pk)
+        video.view += 1
+        video.save()
+        serializer = VideoSerializer(video, context={'request': request})
+        return Response(response_success(serializer.data), status=200)
+    except Exception as e:
+        return Response(response_error(str(e)), status=400)
+    

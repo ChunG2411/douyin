@@ -38,28 +38,28 @@ onMounted(() => {
 <template>
   <div class="taskbar">
     <div class="taskbar_item active_taskbar">
-      <font-awesome-icon :icon="['fas', 'house']" class="icon15 white icon_margin_right" />
-      <router-link class="text normal_color fs_15" to="/">Home</router-link>
+      <font-awesome-icon :icon="['fas', 'house']" class="icon15 normal_color icon_margin_right" />
+      <router-link class="text normal_color fs_15" to="/">{{ store.translate("taskbar", "home") }}</router-link>
     </div>
 
     <router-link class="taskbar_item no_decor" to="/followed" v-if="store.is_login">
-      <font-awesome-icon :icon="['fas', 'star']" class="icon15 white icon_margin_right" />
-      <p class="text normal_color fs_15">Followed</p>
+      <font-awesome-icon :icon="['fas', 'star']" class="icon15 normal_color icon_margin_right" />
+      <p class="text normal_color fs_15">{{ store.translate("taskbar", "suggest") }}</p>
     </router-link>
 
     <div class="taskbar_item" v-else @click="show_login_popup = !show_login_popup">
-      <font-awesome-icon :icon="['fas', 'star']" class="icon15 white icon_margin_right" />
-      <p class="text normal_color fs_15">Followed</p>
+      <font-awesome-icon :icon="['fas', 'star']" class="icon15 normal_color icon_margin_right" />
+      <p class="text normal_color fs_15">{{ store.translate("taskbar", "suggest") }}</p>
     </div>
 
     <router-link class="taskbar_item no_decor" v-if="store.is_login" to="/profile/self">
-      <font-awesome-icon :icon="['fas', 'user']" class="icon15 white icon_margin_right" />
-      <p class="text normal_color fs_15">Profile</p>
+      <font-awesome-icon :icon="['fas', 'user']" class="icon15 normal_color icon_margin_right" />
+      <p class="text normal_color fs_15">{{ store.translate("taskbar", "profile") }}</p>
     </router-link>
 
     <div class="taskbar_item" v-else @click="show_login_popup = !show_login_popup">
-      <font-awesome-icon :icon="['fas', 'user']" class="icon15 white icon_margin_right" />
-      <p class="text normal_color fs_15">Profile</p>
+      <font-awesome-icon :icon="['fas', 'user']" class="icon15 normal_color icon_margin_right" />
+      <p class="text normal_color fs_15">{{ store.translate("taskbar", "profile") }}</p>
     </div>
   </div>
 
@@ -78,8 +78,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100%;
-  width: 110px;
+  height: calc(100% - 55px);
+  width: 120px;
   z-index: 10;
   padding: 5px;
   background: var(--background_color);

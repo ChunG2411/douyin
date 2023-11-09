@@ -40,7 +40,7 @@ const delete_noti = (id) => {
                     noti_list.value.splice(i, 1)
                 }
             }
-            store.msg_success = "Delete successful."
+            store.msg_success = store.translate("msg","delete")
         })
         .catch(error => {
             try {
@@ -86,7 +86,7 @@ window.addEventListener('scroll', loadMoreNoti);
 
 <template>
     <div class="notification">
-        <p class="text normal_color fs_17">Notification</p>
+        <p class="text normal_color fs_17">{{ store.translate("noti", "noti") }}</p>
         <div class="noti_list_item mg_t_5" v-if="noti_list.length > 0" v-on:scroll="loadMoreNoti">
             <div class="noti_item" v-for="noti in noti_list" :key="noti.id">
                 <div class="noti_item_left">
@@ -101,24 +101,27 @@ window.addEventListener('scroll', loadMoreNoti);
                     </div>
                     <div class="noti_content">
                         <p class="text normal_color fs_15" v-if="noti.user_interact.split(',').length - 1 > 0">
-                            {{ noti.context }} and {{ noti.user_interact.split(',').length - 1 }} other people
+                            {{ noti.context }} {{ store.translate("noti", "and") }} {{ noti.user_interact.split(',').length - 1 }} {{ store.translate("noti", "other") }}
                         </p>
                         <p class="text normal_color fs_15" v-else>{{ noti.context }}</p>
 
-                        <p class="normal_text normal_color fs_15" v-if="noti.type == 'like_video'">liked your video</p>
-                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'comment_video'">commented your video</p>
-                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'like_comment'">liked your comment</p>
-                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'comment_comment'">commented your comment</p>
-                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'follow'">followed you</p>
+                        <p class="normal_text normal_color fs_15" v-if="noti.type == 'like_video'">{{ store.translate("noti", "like_video") }}</p>
+                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'comment_video'">{{ store.translate("noti", "cmt_video") }}</p>
+                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'like_comment'">{{ store.translate("noti", "like_cmt") }}</p>
+                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'comment_comment'">{{ store.translate("noti", "cmt_cmt") }}</p>
+                        <p class="normal_text normal_color fs_15" v-else-if="noti.type == 'follow'">{{ store.translate("noti", "follow") }}</p>
+
+                        <p class="normal_text normal_color fs_11">-{{ noti.create_time }} {{ store.translate("creator",
+                                    "duration") }}-</p>
                     </div>
                 </div>
                 <div class="noti_item_right">
-                    <button @click="delete_noti(noti.id)" class="fs_13">Delete</button>
+                    <button @click="delete_noti(noti.id)" class="fs_13">{{ store.translate("noti", "delete") }}</button>
                 </div>
             </div>
         </div>
         <div v-else>
-            <p>No notification</p>
+            <p class="normal_text normal_color fs_13 mg_l_10">{{ store.translate("noti", "no") }}</p>
         </div>
     </div>
 </template>
@@ -126,7 +129,6 @@ window.addEventListener('scroll', loadMoreNoti);
 <style>
 .notification {
     height: 100%;
-    background: transparent;
 }
 
 .noti_list_item {

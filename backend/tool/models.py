@@ -45,6 +45,7 @@ class Chat(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chat_user")
     name = models.TextField(max_length=255, blank=True, null=True)
+    partner = models.TextField(max_length=255, blank=True, null=True)
     member = models.ManyToManyField(User, blank=True, related_name="chat_member")
     TYPE_CHOICES = (
         ('1', 'single'),
@@ -80,3 +81,12 @@ class Message(models.Model):
         db_table = 'tb_message'
         verbose_name = 'Message'
 
+
+class Setup(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_setup")
+    lang = models.CharField(max_length=10, default="en")
+    theme = models.CharField(max_length=10, default="dark")
+
+    class Meta:
+        db_table = 'tb_setup'
+        verbose_name = 'Setup'
