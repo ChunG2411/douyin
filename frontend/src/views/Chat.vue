@@ -31,9 +31,11 @@ const show_add_chat_popup = ref(false)
 const show_add_member_popup = ref(false)
 const show_remove_member_popup = ref(false)
 const show_leader_member_popup = ref(false)
+const show_image_popup = ref(false)
 
 const preview_image_upload = ref(null)
 const preview_modify_image_upload = ref(null)
+const preview_image_chat = ref(null)
 
 const form_msg = reactive({
     text: '',
@@ -257,7 +259,7 @@ const submit_new_chat = () => {
             chat_list.value.push(response.data.data)
             member_chat.value = []
             show_add_chat_popup.value = false
-            store.msg_success = store.translate("msg","create")
+            store.msg_success = store.translate("msg", "create")
         })
         .catch(error => {
             try {
@@ -281,7 +283,7 @@ const delete_chat = (id) => {
                 }
             }
             cur_chat.value = null
-            store.msg_success = store.translate("msg","delete")
+            store.msg_success = store.translate("msg", "delete")
         })
         .catch(error => {
             try {
@@ -331,7 +333,7 @@ const submit_add_new_member = () => {
 
     axios.post(`${store.domain}/api/chat/${cur_chat.value.id}/add`, form, header)
         .then(response => {
-            store.msg_success = store.translate("msg","add")
+            store.msg_success = store.translate("msg", "add")
         })
         .catch(error => {
             try {
@@ -358,7 +360,7 @@ const submit_remove_member = (username, index) => {
 
     axios.post(`${store.domain}/api/chat/${cur_chat.value.id}/remove`, form, header)
         .then(response => {
-            store.msg_success = store.translate("msg","remove")
+            store.msg_success = store.translate("msg", "remove")
             member_list.value.splice(index, 1)
         })
         .catch(error => {
@@ -387,7 +389,7 @@ const submit_change_key = (username) => {
     axios.put(`${store.domain}/api/chat/${cur_chat.value.id}/change-key`, form, header)
         .then(response => {
             location.reload()
-            store.msg_success = store.translate("msg","change")
+            store.msg_success = store.translate("msg", "change")
         })
         .catch(error => {
             try {
@@ -411,7 +413,7 @@ const exit_chat = (id) => {
                 }
             }
             cur_chat.value = null
-            store.msg_success = store.translate("msg","exit")
+            store.msg_success = store.translate("msg", "exit")
         })
         .catch(error => {
             try {
@@ -444,7 +446,7 @@ const submit_modify_form = () => {
 
     axios.put(`${store.domain}/api/chat?id=${cur_chat.value.id}`, form, header)
         .then(response => {
-            store.msg_success = store.translate("msg","modify")
+            store.msg_success = store.translate("msg", "modify")
             location.reload()
         })
         .catch(error => {
@@ -476,7 +478,10 @@ const close_popup = [() => {
     show_member_chat.value = false
     show_add_chat_popup.value = false
     show_leader_member_popup.value = false
+    show_image_popup.value = false
+
     add_member_list.value = []
+    preview_image_chat.value = null
 }]
 
 const loadMoreChat = (e) => {
@@ -573,7 +578,8 @@ const loadMoreChat = (e) => {
                                 <div class="msg_item">
                                     <p class="normal_text normal_color fs_13" v-if="msg.context">{{ msg.context }}</p>
                                     <div>
-                                        <img class="message_image" :src="store.domain + msg.media" v-if="msg.media">
+                                        <img class="message_image" :src="store.domain + msg.media" v-if="msg.media"
+                                            @click="preview_image_chat = store.domain + msg.media; show_image_popup = true">
                                     </div>
                                 </div>
                             </div>
@@ -581,7 +587,8 @@ const loadMoreChat = (e) => {
                                 <div class="msg_item">
                                     <p class="normal_text normal_color fs_13" v-if="msg.context">{{ msg.context }}</p>
                                     <div>
-                                        <img class="message_image" :src="store.domain + msg.media" v-if="msg.media">
+                                        <img class="message_image" :src="store.domain + msg.media" v-if="msg.media"
+                                            @click="preview_image_chat = store.domain + msg.media; show_image_popup = true">
                                     </div>
                                 </div>
                             </div>
@@ -621,7 +628,8 @@ const loadMoreChat = (e) => {
             </div>
             <div class="chat_right_action" v-if="show_action_chat">
                 <div class="display_flex_column align_center gap10">
-                    <img class="chat_avatar_detail" :src="store.domain + cur_chat.avatar">
+                    <img class="chat_avatar_detail" :src="store.domain + cur_chat.avatar"
+                        @click="preview_image_chat = store.domain + cur_chat.avatar; show_image_popup = true">
                     <p class="text normal_color fs_15" v-if="store.my_profile.username == cur_chat.user">{{ cur_chat.partner
                     }}</p>
                     <p class="text normal_color fs_15" v-else>{{ cur_chat.name }}</p>
@@ -669,8 +677,7 @@ const loadMoreChat = (e) => {
                             {{ store.translate("chat", "key") }}
                         </p>
                     </div>
-                    <div class="display_flex gap10 align_center"
-                        v-if="cur_chat.type != 'single'">
+                    <div class="display_flex gap10 align_center" v-if="cur_chat.type != 'single'">
                         <font-awesome-icon :icon="['fas', 'arrow-right-from-bracket']" class="icon normal_color" />
                         <p class="normal_text normal_color fs_15" @click="exit_chat(cur_chat.id)">
                             {{ store.translate("chat", "exit") }}
@@ -681,7 +688,7 @@ const loadMoreChat = (e) => {
         </div>
 
         <div class="popup"
-            v-if="show_add_chat_popup || show_member_chat || show_add_member_popup || show_remove_member_popup || show_modify_chat || show_leader_member_popup">
+            v-if="show_add_chat_popup || show_member_chat || show_add_member_popup || show_remove_member_popup || show_modify_chat || show_leader_member_popup || show_image_popup">
             <div class="popup_board" v-if="show_add_chat_popup" v-on-click-outside="close_popup">
                 <p class="text normal_color fs_17">{{ store.translate("chat", "add_chat") }}</p>
                 <div class="chat_popup_add">
@@ -874,6 +881,10 @@ const loadMoreChat = (e) => {
                         <button type="submit" class="fs_17">{{ store.translate("profile", "submit") }}</button>
                     </div>
                 </form>
+            </div>
+
+            <div class="popup_board" v-if="show_image_popup" v-on-click-outside="close_popup">
+                <img class="preview_image_chat" :src="preview_image_chat">
             </div>
         </div>
     </div>

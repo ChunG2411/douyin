@@ -24,7 +24,6 @@ const search_result = reactive({
     user: []
 })
 const show_login_popup = ref(false)
-const show_comment = ref(false)
 const page_search_video = ref(0)
 const page_search_user = ref(0)
 

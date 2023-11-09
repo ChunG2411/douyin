@@ -150,7 +150,7 @@ window.addEventListener('scroll', loadMoreComment);
 }
 
 .comment_list_item {
-    overflow: hidden;
+    overflow: scroll;
     height: 85%;
 }
 .comment_list_item:hover {

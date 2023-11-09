@@ -501,6 +501,10 @@ button:hover {
   width: 400px;
 }
 
+.preview_image_chat{
+  height: 580px;
+}
+
 /* video */
 .video_search {
   width: 700px;
